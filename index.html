@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendamento de Salas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .agendamentos {
+      margin-top: 30px;
+    }
+    .agendamento-item {
+      background-color: #e9ecef;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+    .month-button {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .month-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Agendamento de Salas</h1>
+    <form id="agendamentoForm">
+      <label for="nome">Nome do Solicitante:</label>
+      <input type="text" id="nome" required placeholder="Digite seu nome">
+
+      <label for="sala">Escolha a Sala:</label>
+      <select id="sala" required>
+        <option value="Sala 1">Sala 1</option>
+        <option value="Sala 2">Sala 2</option>
+      </select>
+
+      <label for="data">Escolha a Data:</label>
+      <input type="date" id="data" required>
+
+      <label for="hora">Escolha o Horário:</label>
+      <input type="time" id="hora" required>
+
+      <label for="descricao">Descrição:</label>
+      <textarea id="descricao" rows="4" placeholder="Descreva o motivo do agendamento (opcional)"></textarea>
+
+      <button type="submit">Agendar</button>
+    </form>
+
+    <button class="month-button" id="verMes">Ver Agendamentos do Mês</button>
+
+    <div class="agendamentos">
+      <h2>Agendamentos Confirmados:</h2>
+      <div id="listaAgendamentos"></div>
+    </div>
+
+    <div class="agendamentos">
+      <h2>Agendamentos do Mês:</h2>
+      <div id="listaMes"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('agendamentoForm');
+    const listaAgendamentos = document.getElementById('listaAgendamentos');
+    const listaMes = document.getElementById('listaMes');
+    const verMesBtn = document.getElementById('verMes');
+
+    let agendamentos = [];
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      // Capturar os dados do formulário
+      const nome = document.getElementById('nome').value;
+      const sala = document.getElementById('sala').value;
+      const data = document.getElementById('data').value;
+      const hora = document.getElementById('hora').value;
+      const descricao = document.getElementById('descricao').value;
+
+      // Verificar se a data e hora já estão agendadas para a mesma sala
+      const conflito = agendamentos.find(agendamento => agendamento.sala === sala && agendamento.data === data && agendamento.hora === hora);
+
+      if (conflito) {
+        alert('Este horário já está agendado para a sala selecionada. Por favor, escolha outro horário.');
+      } else {
+        // Adicionar o agendamento à lista
+        agendamentos.push({ nome, sala, data, hora, descricao });
+
+        // Atualizar a lista de agendamentos na tela
+        atualizarListaAgendamentos();
+        alert('Agendamento realizado com sucesso!');
+      }
+
+      // Limpar o formulário após o envio
+      form.reset();
+    });
+
+    // Função para atualizar a lista de agendamentos
+    function atualizarListaAgendamentos() {
+      listaAgendamentos.innerHTML = '';
+      agendamentos.forEach(agendamento => {
+        const div = document.createElement('div');
+        div.classList.add('agendamento-item');
+        div.innerHTML = `
+          <strong>Nome:</strong> ${agendamento.nome}<br>
+          <strong>Sala:</strong> ${agendamento.sala}<br>
+          <strong>Data:</strong> ${agendamento.data}<br>
+          <strong>Hora:</strong> ${agendamento.hora}<br>
+          <strong>Descrição:</strong> ${agendamento.descricao ? agendamento.descricao : 'Não especificada'}
+        `;
+        listaAgendamentos.appendChild(div);
+      });
+    }
+
+    // Função para verificar se uma data está no mês atual
+    function isThisMonth(agendamentoData) {
+      const now = new Date();
+      const dataAgendamento = new Date(agendamentoData);
+
+      // Verificar se o mês e o ano da data do agendamento são os mesmos do mês atual
+      return dataAgendamento.getMonth() === now.getMonth() && dataAgendamento.getFullYear() === now.getFullYear();
+    }
+
+    // Função para mostrar os agendamentos do mês
+    function mostrarAgendamentosDoMes() {
+      listaMes.innerHTML = '';
+
+      const agendamentosDoMes = agendamentos.filter(agendamento => isThisMonth(agendamento.data));
+
+      if (agendamentosDoMes.length > 0) {
+        agendamentosDoMes.forEach(agendamento => {
+          const div = document.createElement('div');
+          div.classList.add('agendamento-item');
+          div.innerHTML = `
+            <strong>Nome:</strong> ${agendamento.nome}<br>
+            <strong>Sala:</strong> ${agendamento.sala}<br>
+            <strong>Data:</strong> ${agendamento.data}<br>
+            <strong>Hora:</strong> ${agendamento.hora}<br>
+            <strong>Descrição:</strong> ${agendamento.descricao ? agendamento.descricao : 'Não especificada'}
+          `;
+          listaMes.appendChild(div);
+        });
+      } else {
+        listaMes.innerHTML = '<p>Não há agendamentos para este mês.</p>';
+      }
+    }
+
+    // Evento para o botão "Ver Agendamentos do Mês"
+    verMesBtn.addEventListener('click', mostrarAgendamentosDoMes);
+  </script>
+
+</body>
+</html>
