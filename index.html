@@ -134,8 +134,9 @@
       const data = document.getElementById('data').value;
       const hora = document.getElementById('hora').value;
 
-      // Corrige o problema de fuso horário ao criar a data
-      const dataAgendamento = corrigirFusoHorario(data);
+      // Aqui, usamos a string da data diretamente, sem criar um objeto Date,
+      // para evitar problemas de fuso horário
+      const dataAgendamento = formatarData(data);
 
       // Verificar se a sala já está agendada para o mesmo horário
       const conflito = agendamentos.find(agendamento => agendamento.sala === sala && agendamento.data === dataAgendamento && agendamento.hora === hora);
@@ -156,19 +157,10 @@
       form.reset();
     });
 
-    // Função para ajustar a data e evitar problemas com fuso horário
-    function corrigirFusoHorario(dataISO) {
-      const [year, month, day] = dataISO.split('-');
-      return `${day}/${month}/${year}`; // Retorna a data no formato dd/mm/yyyy
-    }
-
     // Função para formatar a data no formato dia/mês/ano
     function formatarData(dataISO) {
-      const data = new Date(dataISO);
-      const dia = String(data.getDate()).padStart(2, '0');
-      const mes = String(data.getMonth() + 1).padStart(2, '0'); // Mês começa do 0, então adicionamos 1
-      const ano = data.getFullYear();
-      return `${dia}/${mes}/${ano}`;
+      const [year, month, day] = dataISO.split('-'); // Dividimos a string da data
+      return `${day}/${month}/${year}`; // Retornamos no formato dd/mm/yyyy
     }
 
     // Função para atualizar a lista de agendamentos
