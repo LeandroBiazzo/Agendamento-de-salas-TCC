@@ -57,18 +57,18 @@
       padding: 10px;
       margin-bottom: 10px;
       border-radius: 4px;
+      position: relative;
     }
-    .month-button {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #007bff;
+    .delete-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      background-color: red;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-    }
-    .month-button:hover {
-      background-color: #0056b3;
     }
   </style>
 </head>
@@ -98,24 +98,15 @@
       <button type="submit">Agendar</button>
     </form>
 
-    <button class="month-button" id="verMes">Ver Agendamentos do Mês</button>
-
     <div class="agendamentos">
       <h2>Agendamentos Confirmados:</h2>
       <div id="listaAgendamentos"></div>
-    </div>
-
-    <div class="agendamentos">
-      <h2>Agendamentos do Mês:</h2>
-      <div id="listaMes"></div>
     </div>
   </div>
 
   <script>
     const form = document.getElementById('agendamentoForm');
     const listaAgendamentos = document.getElementById('listaAgendamentos');
-    const listaMes = document.getElementById('listaMes');
-    const verMesBtn = document.getElementById('verMes');
 
     let agendamentos = [];
 
@@ -129,7 +120,7 @@
       const hora = document.getElementById('hora').value;
       const descricao = document.getElementById('descricao').value;
 
-      // Verificar se a data e hora já estão agendadas para a mesma sala
+      // Verificar se a sala já está agendada para o mesmo horário
       const conflito = agendamentos.find(agendamento => agendamento.sala === sala && agendamento.data === data && agendamento.hora === hora);
 
       if (conflito) {
@@ -147,58 +138,52 @@
       form.reset();
     });
 
+    // Função para formatar a data no formato dia/mês/ano
+    function formatarData(dataISO) {
+      const data = new Date(dataISO);
+      const dia = String(data.getDate()).padStart(2, '0');
+      const mes = String(data.getMonth() + 1).padStart(2, '0'); // Mês começa do 0, então adicionamos 1
+      const ano = data.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    }
+
     // Função para atualizar a lista de agendamentos
     function atualizarListaAgendamentos() {
       listaAgendamentos.innerHTML = '';
-      agendamentos.forEach(agendamento => {
+      agendamentos.forEach((agendamento, index) => {
         const div = document.createElement('div');
         div.classList.add('agendamento-item');
         div.innerHTML = `
           <strong>Nome:</strong> ${agendamento.nome}<br>
           <strong>Sala:</strong> ${agendamento.sala}<br>
-          <strong>Data:</strong> ${agendamento.data}<br>
+          <strong>Data:</strong> ${formatarData(agendamento.data)}<br>
           <strong>Hora:</strong> ${agendamento.hora}<br>
           <strong>Descrição:</strong> ${agendamento.descricao ? agendamento.descricao : 'Não especificada'}
         `;
+
+        // Adicionar botão de exclusão
+        const deleteButton = document.createElement('button');
+        deleteButton.classList.add('delete-button');
+        deleteButton.textContent = 'Excluir';
+        deleteButton.addEventListener('click', () => excluirAgendamento(index, agendamento.nome));
+
+        div.appendChild(deleteButton);
         listaAgendamentos.appendChild(div);
       });
     }
 
-    // Função para verificar se uma data está no mês atual
-    function isThisMonth(agendamentoData) {
-      const now = new Date();
-      const dataAgendamento = new Date(agendamentoData);
+    // Função para excluir agendamento
+    function excluirAgendamento(index, nomeSolicitante) {
+      const nomeUsuarioAtual = prompt('Para excluir, digite o seu nome:');
 
-      // Verificar se o mês e o ano da data do agendamento são os mesmos do mês atual
-      return dataAgendamento.getMonth() === now.getMonth() && dataAgendamento.getFullYear() === now.getFullYear();
-    }
-
-    // Função para mostrar os agendamentos do mês
-    function mostrarAgendamentosDoMes() {
-      listaMes.innerHTML = '';
-
-      const agendamentosDoMes = agendamentos.filter(agendamento => isThisMonth(agendamento.data));
-
-      if (agendamentosDoMes.length > 0) {
-        agendamentosDoMes.forEach(agendamento => {
-          const div = document.createElement('div');
-          div.classList.add('agendamento-item');
-          div.innerHTML = `
-            <strong>Nome:</strong> ${agendamento.nome}<br>
-            <strong>Sala:</strong> ${agendamento.sala}<br>
-            <strong>Data:</strong> ${agendamento.data}<br>
-            <strong>Hora:</strong> ${agendamento.hora}<br>
-            <strong>Descrição:</strong> ${agendamento.descricao ? agendamento.descricao : 'Não especificada'}
-          `;
-          listaMes.appendChild(div);
-        });
+      if (nomeUsuarioAtual === nomeSolicitante) {
+        agendamentos.splice(index, 1); // Remove o agendamento da lista
+        atualizarListaAgendamentos();
+        alert('Agendamento excluído com sucesso!');
       } else {
-        listaMes.innerHTML = '<p>Não há agendamentos para este mês.</p>';
+        alert('Você só pode excluir seus próprios agendamentos.');
       }
     }
-
-    // Evento para o botão "Ver Agendamentos do Mês"
-    verMesBtn.addEventListener('click', mostrarAgendamentosDoMes);
   </script>
 
 </body>
