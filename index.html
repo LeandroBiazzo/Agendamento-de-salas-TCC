@@ -98,8 +98,8 @@
         <label for="temaTcc">Tema TCC:</label>
         <input type="text" id="temaTcc" placeholder="Digite o tema do TCC">
 
-        <label for="bancaTcc">Banca Sugerida:</label>
-        <input type="text" id="bancaTcc" placeholder="Digite a banca sugerida">
+        <label for="bancaTcc">Integrantes da Banca:</label>
+        <input type="text" id="bancaTcc" placeholder="Digite os integrantes da banca">
       </div>
 
       <!-- Campo adicional para Manutenção -->
@@ -233,7 +233,7 @@
         div.classList.add('agendamento-item');
         div.innerHTML = `
           <strong>Finalidade:</strong> ${agendamento.finalidade}<br>
-          ${agendamento.finalidade === 'TCC' ? `<strong>Tema TCC:</strong> ${agendamento.tema}<br><strong>Banca Sugerida:</strong> ${agendamento.banca}<br>` : ''}
+          ${agendamento.finalidade === 'TCC' ? `<strong>Tema TCC:</strong> ${agendamento.tema}<br><strong>Integrantes da Banca:</strong> ${agendamento.banca}<br>` : ''}
           ${agendamento.finalidade === 'MANUTENÇÃO' ? `<strong>Motivo:</strong> ${agendamento.motivo}<br>` : ''}
           <strong>Solicitante:</strong> ${agendamento.solicitante} - ${agendamento.nomeSolicitante}<br>
           <strong>Sala:</strong> ${agendamento.sala}<br>
