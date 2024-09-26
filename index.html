@@ -70,6 +70,9 @@
       border-radius: 4px;
       cursor: pointer;
     }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -77,9 +80,50 @@
   <div class="container">
     <h1>Agendamento de Salas</h1>
     <form id="agendamentoForm">
-      <label for="nome">Nome do Solicitante:</label>
-      <input type="text" id="nome" required placeholder="Digite seu nome">
+      
+      <!-- Finalidade -->
+      <label for="finalidade">Finalidade:</label>
+      <select id="finalidade" required>
+        <option value="">Selecione a Finalidade</option>
+        <option value="AULA">AULA</option>
+        <option value="TCC">TCC</option>
+        <option value="PROVA">PROVA</option>
+        <option value="DISCUSSÃO DE CASO">DISCUSSÃO DE CASO</option>
+        <option value="REUNIÃO">REUNIÃO</option>
+        <option value="MANUTENÇÃO">MANUTENÇÃO</option>
+      </select>
 
+      <!-- Campos adicionais para TCC -->
+      <div id="tccFields" class="hidden">
+        <label for="temaTcc">Tema TCC:</label>
+        <input type="text" id="temaTcc" placeholder="Digite o tema do TCC">
+
+        <label for="bancaTcc">Banca Sugerida:</label>
+        <input type="text" id="bancaTcc" placeholder="Digite a banca sugerida">
+      </div>
+
+      <!-- Campo adicional para Manutenção -->
+      <div id="manutencaoFields" class="hidden">
+        <label for="motivoManutencao">Motivo da Manutenção:</label>
+        <input type="text" id="motivoManutencao" placeholder="Digite o motivo da manutenção">
+      </div>
+
+      <!-- Solicitante -->
+      <label for="solicitante">Solicitante:</label>
+      <select id="solicitante" required>
+        <option value="">Selecione o Solicitante</option>
+        <option value="PROFESSOR">PROFESSOR</option>
+        <option value="RESIDENTE">RESIDENTE</option>
+        <option value="ALUNO">ALUNO</option>
+        <option value="RESP. TÉCNICO">RESP. TÉCNICO</option>
+        <option value="GERENTE">GERENTE</option>
+        <option value="PALESTRANTE">PALESTRANTE</option>
+      </select>
+
+      <label for="nomeSolicitante">Nome do Solicitante:</label>
+      <input type="text" id="nomeSolicitante" required placeholder="Digite o nome do solicitante">
+
+      <!-- Sala e Data -->
       <label for="sala">Escolha a Sala:</label>
       <select id="sala" required>
         <option value="Sala 1">Sala 1</option>
@@ -91,9 +135,6 @@
 
       <label for="hora">Escolha o Horário:</label>
       <input type="time" id="hora" required>
-
-      <label for="descricao">Descrição:</label>
-      <textarea id="descricao" rows="4" placeholder="Descreva o motivo do agendamento (opcional)"></textarea>
 
       <button type="submit">Agendar</button>
     </form>
@@ -108,17 +149,52 @@
     const form = document.getElementById('agendamentoForm');
     const listaAgendamentos = document.getElementById('listaAgendamentos');
 
+    const finalidadeSelect = document.getElementById('finalidade');
+    const tccFields = document.getElementById('tccFields');
+    const manutencaoFields = document.getElementById('manutencaoFields');
+
+    const temaTcc = document.getElementById('temaTcc');
+    const bancaTcc = document.getElementById('bancaTcc');
+    const motivoManutencao = document.getElementById('motivoManutencao');
+
     let agendamentos = [];
+
+    // Exibir campos adicionais com base na finalidade selecionada
+    finalidadeSelect.addEventListener('change', function() {
+      if (this.value === 'TCC') {
+        tccFields.classList.remove('hidden');
+        manutencaoFields.classList.add('hidden');
+      } else if (this.value === 'MANUTENÇÃO') {
+        manutencaoFields.classList.remove('hidden');
+        tccFields.classList.add('hidden');
+      } else {
+        tccFields.classList.add('hidden');
+        manutencaoFields.classList.add('hidden');
+      }
+    });
 
     form.addEventListener('submit', function(event) {
       event.preventDefault();
 
       // Capturar os dados do formulário
-      const nome = document.getElementById('nome').value;
+      const finalidade = document.getElementById('finalidade').value;
+      const nomeSolicitante = document.getElementById('nomeSolicitante').value;
+      const solicitante = document.getElementById('solicitante').value;
       const sala = document.getElementById('sala').value;
       const data = document.getElementById('data').value;
       const hora = document.getElementById('hora').value;
-      const descricao = document.getElementById('descricao').value;
+
+      // Campos adicionais
+      let tema = '';
+      let banca = '';
+      let motivo = '';
+
+      if (finalidade === 'TCC') {
+        tema = temaTcc.value;
+        banca = bancaTcc.value;
+      } else if (finalidade === 'MANUTENÇÃO') {
+        motivo = motivoManutencao.value;
+      }
 
       // Verificar se a sala já está agendada para o mesmo horário
       const conflito = agendamentos.find(agendamento => agendamento.sala === sala && agendamento.data === data && agendamento.hora === hora);
@@ -127,7 +203,7 @@
         alert('Este horário já está agendado para a sala selecionada. Por favor, escolha outro horário.');
       } else {
         // Adicionar o agendamento à lista
-        agendamentos.push({ nome, sala, data, hora, descricao });
+        agendamentos.push({ finalidade, solicitante, nomeSolicitante, sala, data, hora, tema, banca, motivo });
 
         // Atualizar a lista de agendamentos na tela
         atualizarListaAgendamentos();
@@ -136,6 +212,8 @@
 
       // Limpar o formulário após o envio
       form.reset();
+      tccFields.classList.add('hidden');
+      manutencaoFields.classList.add('hidden');
     });
 
     // Função para formatar a data no formato dia/mês/ano
@@ -154,18 +232,20 @@
         const div = document.createElement('div');
         div.classList.add('agendamento-item');
         div.innerHTML = `
-          <strong>Nome:</strong> ${agendamento.nome}<br>
+          <strong>Finalidade:</strong> ${agendamento.finalidade}<br>
+          ${agendamento.finalidade === 'TCC' ? `<strong>Tema TCC:</strong> ${agendamento.tema}<br><strong>Banca Sugerida:</strong> ${agendamento.banca}<br>` : ''}
+          ${agendamento.finalidade === 'MANUTENÇÃO' ? `<strong>Motivo:</strong> ${agendamento.motivo}<br>` : ''}
+          <strong>Solicitante:</strong> ${agendamento.solicitante} - ${agendamento.nomeSolicitante}<br>
           <strong>Sala:</strong> ${agendamento.sala}<br>
           <strong>Data:</strong> ${formatarData(agendamento.data)}<br>
-          <strong>Hora:</strong> ${agendamento.hora}<br>
-          <strong>Descrição:</strong> ${agendamento.descricao ? agendamento.descricao : 'Não especificada'}
+          <strong>Hora:</strong> ${agendamento.hora}
         `;
 
         // Adicionar botão de exclusão
         const deleteButton = document.createElement('button');
         deleteButton.classList.add('delete-button');
         deleteButton.textContent = 'Excluir';
-        deleteButton.addEventListener('click', () => excluirAgendamento(index, agendamento.nome));
+        deleteButton.addEventListener('click', () => excluirAgendamento(index, agendamento.nomeSolicitante));
 
         div.appendChild(deleteButton);
         listaAgendamentos.appendChild(div);
