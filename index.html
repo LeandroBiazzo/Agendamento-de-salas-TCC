@@ -59,19 +59,61 @@
       border-radius: 4px;
       position: relative;
     }
-    .delete-button {
+    .delete-button, .edit-button {
       position: absolute;
       top: 10px;
-      right: 10px;
       padding: 5px 10px;
-      background-color: red;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
     }
+    .delete-button {
+      right: 10px;
+      background-color: red;
+    }
+    .edit-button {
+      right: 80px;
+      background-color: blue;
+    }
     .hidden {
       display: none;
+    }
+    .planner-button {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .planner-button:hover {
+      background-color: #0056b3;
+    }
+    .planner {
+      display: none;
+      margin-top: 20px;
+    }
+    .planner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .planner-table th, .planner-table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    .back-button {
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .back-button:hover {
+      background-color: #218838;
     }
   </style>
 </head>
@@ -136,18 +178,42 @@
       <label for="hora">Escolha o Horário:</label>
       <input type="time" id="hora" required>
 
-      <button type="submit">Agendar</button>
+      <button type="submit" id="agendarButton">Agendar</button>
     </form>
+
+    <button class="planner-button" id="verMes">Ver Agendamentos Mensais</button>
 
     <div class="agendamentos">
       <h2>Agendamentos Confirmados:</h2>
       <div id="listaAgendamentos"></div>
+    </div>
+
+    <!-- Planner Mensal -->
+    <div class="planner hidden" id="planner">
+      <h2>Planner Mensal</h2>
+      <table class="planner-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Agendamentos</th>
+          </tr>
+        </thead>
+        <tbody id="plannerBody">
+          <!-- Agendamentos serão inseridos dinamicamente aqui -->
+        </tbody>
+      </table>
+      <button class="back-button" id="voltar">Voltar</button>
     </div>
   </div>
 
   <script>
     const form = document.getElementById('agendamentoForm');
     const listaAgendamentos = document.getElementById('listaAgendamentos');
+    const agendarButton = document.getElementById('agendarButton');
+    const verMesBtn = document.getElementById('verMes');
+    const planner = document.getElementById('planner');
+    const plannerBody = document.getElementById('plannerBody');
+    const voltarBtn = document.getElementById('voltar');
 
     const finalidadeSelect = document.getElementById('finalidade');
     const tccFields = document.getElementById('tccFields');
@@ -158,6 +224,7 @@
     const motivoManutencao = document.getElementById('motivoManutencao');
 
     let agendamentos = [];
+    let editIndex = -1;  // Para armazenar o índice do item em edição
 
     // Exibir campos adicionais com base na finalidade selecionada
     finalidadeSelect.addEventListener('change', function() {
@@ -196,19 +263,27 @@
         motivo = motivoManutencao.value;
       }
 
-      // Verificar se a sala já está agendada para o mesmo horário
-      const conflito = agendamentos.find(agendamento => agendamento.sala === sala && agendamento.data === data && agendamento.hora === hora);
-
-      if (conflito) {
-        alert('Este horário já está agendado para a sala selecionada. Por favor, escolha outro horário.');
+      // Se estiver no modo de edição, atualize o agendamento existente
+      if (editIndex >= 0) {
+        agendamentos[editIndex] = { finalidade, solicitante, nomeSolicitante, sala, data, hora, tema, banca, motivo };
+        editIndex = -1;  // Voltar ao modo de criação de novo agendamento
+        agendarButton.textContent = 'Agendar';  // Reiniciar o botão para "Agendar"
       } else {
+        // Verificar se a sala já está agendada para o mesmo horário
+        const conflito = agendamentos.find(agendamento => agendamento.sala === sala && agendamento.data === data && agendamento.hora === hora);
+
+        if (conflito) {
+          alert('Este horário já está agendado para a sala selecionada. Por favor, escolha outro horário.');
+          return;
+        }
+
         // Adicionar o agendamento à lista
         agendamentos.push({ finalidade, solicitante, nomeSolicitante, sala, data, hora, tema, banca, motivo });
-
-        // Atualizar a lista de agendamentos na tela
-        atualizarListaAgendamentos();
-        alert('Agendamento realizado com sucesso!');
       }
+
+      // Atualizar a lista de agendamentos na tela
+      atualizarListaAgendamentos();
+      alert('Agendamento realizado com sucesso!');
 
       // Limpar o formulário após o envio
       form.reset();
@@ -241,15 +316,51 @@
           <strong>Hora:</strong> ${agendamento.hora}
         `;
 
-        // Adicionar botão de exclusão
+        // Botão de edição
+        const editButton = document.createElement('button');
+        editButton.classList.add('edit-button');
+        editButton.textContent = 'Alterar';
+        editButton.addEventListener('click', () => carregarAgendamentoParaEdicao(index));
+
+        // Botão de exclusão
         const deleteButton = document.createElement('button');
         deleteButton.classList.add('delete-button');
         deleteButton.textContent = 'Excluir';
         deleteButton.addEventListener('click', () => excluirAgendamento(index, agendamento.nomeSolicitante));
 
+        div.appendChild(editButton);
         div.appendChild(deleteButton);
         listaAgendamentos.appendChild(div);
       });
+    }
+
+    // Função para carregar os dados do agendamento no formulário para edição
+    function carregarAgendamentoParaEdicao(index) {
+      const agendamento = agendamentos[index];
+
+      document.getElementById('finalidade').value = agendamento.finalidade;
+      document.getElementById('nomeSolicitante').value = agendamento.nomeSolicitante;
+      document.getElementById('solicitante').value = agendamento.solicitante;
+      document.getElementById('sala').value = agendamento.sala;
+      document.getElementById('data').value = agendamento.data;
+      document.getElementById('hora').value = agendamento.hora;
+
+      // Exibir campos adicionais com base na finalidade
+      if (agendamento.finalidade === 'TCC') {
+        tccFields.classList.remove('hidden');
+        temaTcc.value = agendamento.tema;
+        bancaTcc.value = agendamento.banca;
+      } else if (agendamento.finalidade === 'MANUTENÇÃO') {
+        manutencaoFields.classList.remove('hidden');
+        motivoManutencao.value = agendamento.motivo;
+      } else {
+        tccFields.classList.add('hidden');
+        manutencaoFields.classList.add('hidden');
+      }
+
+      // Ajustar o botão de agendamento para "Salvar Alterações"
+      agendarButton.textContent = 'Salvar Alterações';
+      editIndex = index;  // Definir o índice do agendamento que está sendo editado
     }
 
     // Função para excluir agendamento
@@ -264,6 +375,46 @@
         alert('Você só pode excluir seus próprios agendamentos.');
       }
     }
+
+    // Função para exibir o planner mensal
+    verMesBtn.addEventListener('click', () => {
+      plannerBody.innerHTML = ''; // Limpar o planner antes de exibir
+
+      const agendamentosDoMes = agendamentos.filter(agendamento => isThisMonth(agendamento.data));
+
+      agendamentosDoMes.forEach(agendamento => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${formatarData(agendamento.data)}</td>
+          <td>
+            ${agendamento.finalidade} - ${agendamento.sala} - ${agendamento.hora}<br>
+            ${agendamento.solicitante} - ${agendamento.nomeSolicitante}
+          </td>
+        `;
+        plannerBody.appendChild(row);
+      });
+
+      planner.classList.remove('hidden'); // Mostrar o planner
+      form.classList.add('hidden'); // Ocultar o formulário
+      listaAgendamentos.classList.add('hidden'); // Ocultar a lista de agendamentos
+      verMesBtn.classList.add('hidden'); // Ocultar o botão de ver mês
+    });
+
+    // Função para verificar se a data está no mês atual
+    function isThisMonth(agendamentoData) {
+      const now = new Date();
+      const dataAgendamento = new Date(agendamentoData);
+
+      return dataAgendamento.getMonth() === now.getMonth() && dataAgendamento.getFullYear() === now.getFullYear();
+    }
+
+    // Função para voltar do planner mensal
+    voltarBtn.addEventListener('click', () => {
+      planner.classList.add('hidden'); // Ocultar o planner
+      form.classList.remove('hidden'); // Mostrar o formulário
+      listaAgendamentos.classList.remove('hidden'); // Mostrar a lista de agendamentos
+      verMesBtn.classList.remove('hidden'); // Mostrar o botão de ver mês
+    });
   </script>
 
 </body>
