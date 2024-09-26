@@ -10,7 +10,7 @@
       margin: 0;
       padding: 0;
       background-color: #f4f4f4;
-      text-transform: uppercase; /* Tudo em letras maiúsculas */
+      text-transform: uppercase;
     }
     .container {
       max-width: 600px;
@@ -372,14 +372,17 @@
         return;
       }
 
+      // Converter a data para UTC
+      const dataUTC = new Date(data + 'T' + hora + ':00Z');
+
       // Se estiver no modo de edição, atualize o agendamento existente
       if (editIndex >= 0) {
-        agendamentos[editIndex] = { finalidade, solicitante, nomeSolicitante, sala, data, hora, tema, banca, orientador, motivo };
+        agendamentos[editIndex] = { finalidade, solicitante, nomeSolicitante, sala, data: dataUTC.toISOString(), hora, tema, banca, orientador, motivo };
         editIndex = -1;  // Voltar ao modo de criação de novo agendamento
         agendarButton.textContent = 'AGENDAR';  // Reiniciar o botão para "Agendar"
       } else {
         // Adicionar o agendamento à lista
-        agendamentos.push({ finalidade, solicitante, nomeSolicitante, sala, data, hora, tema, banca, orientador, motivo });
+        agendamentos.push({ finalidade, solicitante, nomeSolicitante, sala, data: dataUTC.toISOString(), hora, tema, banca, orientador, motivo });
       }
 
       // Atualizar a lista de agendamentos na tela
@@ -395,9 +398,9 @@
     // Função para formatar a data no formato dia/mês/ano
     function formatarData(dataISO) {
       const data = new Date(dataISO);
-      const dia = String(data.getDate()).padStart(2, '0');
-      const mes = String(data.getMonth() + 1).padStart(2, '0'); // Mês começa do 0, então adicionamos 1
-      const ano = data.getFullYear();
+      const dia = String(data.getUTCDate()).padStart(2, '0');
+      const mes = String(data.getUTCMonth() + 1).padStart(2, '0');
+      const ano = data.getUTCFullYear();
       return `${dia}/${mes}/${ano}`;
     }
 
@@ -463,7 +466,7 @@
       }
 
       document.getElementById('sala').value = agendamento.sala;
-      document.getElementById('data').value = agendamento.data;
+      document.getElementById('data').value = new Date(agendamento.data).toISOString().split('T')[0];
       document.getElementById('hora').value = agendamento.hora;
 
       // Exibir campos adicionais com base na finalidade
@@ -527,7 +530,7 @@
       const now = new Date();
       const dataAgendamento = new Date(agendamentoData);
 
-      return dataAgendamento.getMonth() === now.getMonth() && dataAgendamento.getFullYear() === now.getFullYear();
+      return dataAgendamento.getUTCMonth() === now.getUTCMonth() && dataAgendamento.getUTCFullYear() === now.getUTCFullYear();
     }
 
     // Função para voltar do planner mensal
