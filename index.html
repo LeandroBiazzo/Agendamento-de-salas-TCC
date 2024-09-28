@@ -77,6 +77,45 @@
       right: 80px;
       background-color: blue;
     }
+    .hidden {
+      display: none;
+    }
+    .planner-button {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .planner-button:hover {
+      background-color: #0056b3;
+    }
+    .planner {
+      display: none;
+      margin-top: 20px;
+    }
+    .planner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .planner-table th, .planner-table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    .back-button {
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .back-button:hover {
+      background-color: #218838;
+    }
   </style>
 </head>
 <body>
@@ -116,7 +155,9 @@
 
       <!-- Solicitante -->
       <label for="solicitante">SOLICITANTE:</label>
-      <select id="solicitante" required></select>
+      <select id="solicitante" required>
+        <!-- As opções serão preenchidas dinamicamente -->
+      </select>
 
       <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
       <input type="text" id="nomeSolicitante" required placeholder="DIGITE O NOME DO SOLICITANTE">
@@ -137,33 +178,73 @@
       <button type="submit" id="agendarButton">AGENDAR</button>
     </form>
 
+    <button class="planner-button" id="verMes">VER AGENDAMENTOS MENSAIS</button>
+
     <div class="agendamentos">
       <h2>AGENDAMENTOS CONFIRMADOS:</h2>
       <div id="listaAgendamentos"></div>
     </div>
+
+    <!-- Planner Mensal -->
+    <div class="planner hidden" id="planner">
+      <h2>PLANNER MENSAL</h2>
+      <table class="planner-table">
+        <thead>
+          <tr>
+            <th>DATA</th>
+            <th>AGENDAMENTOS</th>
+          </tr>
+        </thead>
+        <tbody id="plannerBody">
+          <!-- Agendamentos serão inseridos dinamicamente aqui -->
+        </tbody>
+      </table>
+      <button class="back-button" id="voltar">VOLTAR</button>
+    </div>
   </div>
 
   <script type="module">
-    // Importação do Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js";
+    // Firebase SDK v9 (modular)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js';
+    import { getFirestore, doc, collection, addDoc, getDocs, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js';
 
-    // Configuração do Firebase
+    // Configuração do Firebase (Substitua pelos seus valores)
     const firebaseConfig = {
-      apiKey: "AIzaSyBw3KtxT-386kduvlDLyCHWYsdc_Ny3j9Y",
-      authDomain: "agendamento-de-sala-c348d.firebaseapp.com",
-      projectId: "agendamento-de-sala-c348d",
-      storageBucket: "agendamento-de-sala-c348d.appspot.com",
-      messagingSenderId: "1051108935402",
-      appId: "1:1051108935402:web:d87c0ce75b27a6908f3993"
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_AUTH_DOMAIN",
+      projectId: "SEU_PROJECT_ID",
+      storageBucket: "SEU_STORAGE_BUCKET",
+      messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+      appId: "SEU_APP_ID"
     };
 
+    // Inicializando o Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let editandoId = null;
+    const form = document.getElementById('agendamentoForm');
+    const listaAgendamentos = document.getElementById('listaAgendamentos');
+    const agendarButton = document.getElementById('agendarButton');
+    const verMesBtn = document.getElementById('verMes');
+    const planner = document.getElementById('planner');
+    const plannerBody = document.getElementById('plannerBody');
+    const voltarBtn = document.getElementById('voltar');
 
-    // Função para salvar ou atualizar agendamento
+    const finalidadeSelect = document.getElementById('finalidade');
+    const solicitanteSelect = document.getElementById('solicitante');
+    const nomeSolicitanteInput = document.getElementById('nomeSolicitante');
+
+    const tccFields = document.getElementById('tccFields');
+    const manutencaoFields = document.getElementById('manutencaoFields');
+
+    const temaTcc = document.getElementById('temaTcc');
+    const bancaTcc = document.getElementById('bancaTcc');
+    const orientadorTcc = document.getElementById('orientadorTcc');
+    const motivoManutencao = document.getElementById('motivoManutencao');
+
+    let editandoId = null; // Para armazenar o ID do item em edição
+
+    // Função para salvar ou atualizar um agendamento
     async function salvarAgendamento(agendamento) {
       try {
         if (editandoId) {
@@ -177,28 +258,31 @@
         listarAgendamentos();
         editandoId = null;
       } catch (error) {
-        console.error('Erro ao salvar agendamento: ', error);
+        console.error('Erro ao salvar agendamento:', error);
         alert('Erro ao salvar agendamento. Tente novamente.');
       }
     }
 
     // Função para listar todos os agendamentos
     async function listarAgendamentos() {
-      const listaAgendamentos = document.getElementById('listaAgendamentos');
-      listaAgendamentos.innerHTML = '';
+      listaAgendamentos.innerHTML = ''; // Limpa a lista antes de adicionar novos itens
 
       const querySnapshot = await getDocs(collection(db, 'agendamentos'));
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach(doc => {
         const agendamento = doc.data();
         const div = document.createElement('div');
         div.classList.add('agendamento-item');
         div.innerHTML = `
           <strong>FINALIDADE:</strong> ${agendamento.finalidade}<br>
+          ${agendamento.finalidade === 'TCC' ? `<strong>TEMA TCC:</strong> ${agendamento.tema}<br><strong>INTEGRANTES DA BANCA:</strong> ${agendamento.banca}<br><strong>ORIENTADOR:</strong> ${agendamento.orientador}<br>` : ''}
+          ${agendamento.finalidade === 'MANUTENÇÃO' ? `<strong>MOTIVO:</strong> ${agendamento.motivo}<br>` : ''}
           <strong>SOLICITANTE:</strong> ${agendamento.solicitante} - ${agendamento.nomeSolicitante}<br>
           <strong>SALA:</strong> ${agendamento.sala}<br>
           <strong>DATA:</strong> ${agendamento.data}<br>
-          <strong>HORA:</strong> ${agendamento.hora}<br>
-          <button class="edit-button" data-id="${doc.id}">EDITAR</button>
+          <strong>HORA:</strong> ${agendamento.hora}
+        `;
+        div.innerHTML += `
+          <button class="edit-button" data-id="${doc.id}">ALTERAR</button>
           <button class="delete-button" data-id="${doc.id}">EXCLUIR</button>
         `;
         listaAgendamentos.appendChild(div);
@@ -224,47 +308,99 @@
           alert('Agendamento excluído com sucesso!');
           listarAgendamentos();
         } catch (error) {
-          console.error('Erro ao excluir agendamento: ', error);
-          alert('Erro ao excluir agendamento.');
+          console.error('Erro ao excluir agendamento:', error);
+          alert('Erro ao excluir agendamento. Tente novamente.');
         }
       }
     }
 
-    // Função para carregar os dados de um agendamento para edição
+    // Função para carregar os dados de um agendamento no formulário para edição
     function carregarAgendamentoParaEdicao(event) {
       const id = event.target.getAttribute('data-id');
       editandoId = id;
 
       // Carregar dados do agendamento para o formulário
       const div = event.target.parentElement;
-      document.getElementById('finalidade').value = div.querySelector('strong:nth-child(1)').textContent.split(': ')[1];
-      document.getElementById('solicitante').value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[0];
-      document.getElementById('nomeSolicitante').value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[1];
+      finalidadeSelect.value = div.querySelector('strong:nth-child(1)').textContent.split(': ')[1];
+      solicitanteSelect.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[0];
+      nomeSolicitanteInput.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[1];
       document.getElementById('sala').value = div.querySelector('strong:nth-child(3)').textContent.split(': ')[1];
       document.getElementById('data').value = div.querySelector('strong:nth-child(4)').textContent.split(': ')[1];
       document.getElementById('hora').value = div.querySelector('strong:nth-child(5)').textContent.split(': ')[1];
 
-      document.getElementById('agendarButton').textContent = 'ATUALIZAR';
+      if (finalidadeSelect.value === 'TCC') {
+        tccFields.classList.remove('hidden');
+        temaTcc.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1];
+        bancaTcc.value = div.querySelector('strong:nth-child(3)').textContent.split(': ')[1];
+        orientadorTcc.value = div.querySelector('strong:nth-child(4)').textContent.split(': ')[1];
+      } else if (finalidadeSelect.value === 'MANUTENÇÃO') {
+        manutencaoFields.classList.remove('hidden');
+        motivoManutencao.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1];
+      }
+
+      agendarButton.textContent = 'SALVAR ALTERAÇÕES';
     }
 
     // Função para lidar com o envio do formulário
-    const form = document.getElementById('agendamentoForm');
     form.addEventListener('submit', function(event) {
       event.preventDefault();
 
       const agendamento = {
-        finalidade: document.getElementById('finalidade').value,
-        solicitante: document.getElementById('solicitante').value,
-        nomeSolicitante: document.getElementById('nomeSolicitante').value,
+        finalidade: finalidadeSelect.value,
+        solicitante: solicitanteSelect.value,
+        nomeSolicitante: nomeSolicitanteInput.value,
         sala: document.getElementById('sala').value,
         data: document.getElementById('data').value,
-        hora: document.getElementById('hora').value
+        hora: document.getElementById('hora').value,
+        tema: temaTcc.value || '',
+        banca: bancaTcc.value || '',
+        orientador: orientadorTcc.value || '',
+        motivo: motivoManutencao.value || ''
       };
 
-      // Salvar ou atualizar o agendamento
+      // Salvar o agendamento
       salvarAgendamento(agendamento);
       form.reset();
-      document.getElementById('agendarButton').textContent = 'AGENDAR';
+      agendarButton.textContent = 'AGENDAR';
+      tccFields.classList.add('hidden');
+      manutencaoFields.classList.add('hidden');
+    });
+
+    // Função para exibir o planner mensal
+    verMesBtn.addEventListener('click', () => {
+      plannerBody.innerHTML = ''; // Limpar o planner antes de exibir
+
+      // Filtrar os agendamentos do mês
+      const agendamentosDoMes = agendamentos.filter(agendamento => isThisMonth(agendamento.data));
+
+      agendamentosDoMes.forEach(agendamento => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${agendamento.data}</td>
+          <td>${agendamento.finalidade} - ${agendamento.sala} - ${agendamento.hora}<br>${agendamento.solicitante} - ${agendamento.nomeSolicitante}</td>
+        `;
+        plannerBody.appendChild(row);
+      });
+
+      planner.classList.remove('hidden');
+      form.classList.add('hidden');
+      listaAgendamentos.classList.add('hidden');
+      verMesBtn.classList.add('hidden');
+    });
+
+    // Função para verificar se a data está no mês atual
+    function isThisMonth(agendamentoData) {
+      const now = new Date();
+      const dataAgendamento = new Date(agendamentoData);
+      return dataAgendamento.getMonth() === now.getMonth() && dataAgendamento.getFullYear() === now.getFullYear();
+    }
+
+    // Função para voltar do planner mensal
+    voltarBtn.addEventListener('click', () => {
+      planner.classList.add('hidden');
+      form.classList.remove('hidden');
+      listaAgendamentos.classList.remove('hidden');
+      verMesBtn.classList.remove('hidden');
     });
 
     // Carregar agendamentos ao carregar a página
