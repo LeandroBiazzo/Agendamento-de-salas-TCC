@@ -88,6 +88,8 @@
   <div class="container">
     <h1>AGENDAMENTO DE SALAS</h1>
     <form id="agendamentoForm">
+      
+      <!-- Finalidade -->
       <label for="finalidade">FINALIDADE:</label>
       <select id="finalidade" required>
         <option value="">SELECIONE A FINALIDADE</option>
@@ -98,6 +100,7 @@
         <option value="MANUTENÇÃO">MANUTENÇÃO</option>
       </select>
 
+      <!-- Campos adicionais para TCC -->
       <div id="tccFields" class="hidden">
         <label for="temaTcc">TEMA TCC:</label>
         <input type="text" id="temaTcc" placeholder="DIGITE O TEMA DO TCC">
@@ -109,23 +112,23 @@
         <input type="text" id="orientadorTcc" placeholder="DIGITE O NOME DO ORIENTADOR">
       </div>
 
+      <!-- Campo adicional para Manutenção -->
       <div id="manutencaoFields" class="hidden">
         <label for="motivoManutencao">MOTIVO DA MANUTENÇÃO:</label>
         <input type="text" id="motivoManutencao" placeholder="DIGITE O MOTIVO DA MANUTENÇÃO">
       </div>
 
+      <!-- Solicitante -->
       <label for="solicitante">SOLICITANTE:</label>
       <select id="solicitante" required>
-        <!-- Aqui você pode adicionar as opções de solicitantes -->
-        <option value="">Selecione o solicitante</option>
         <option value="Professor A">Professor A</option>
         <option value="Professor B">Professor B</option>
-        <!-- Você pode carregar mais opções dinamicamente -->
       </select>
 
       <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
       <input type="text" id="nomeSolicitante" required placeholder="DIGITE O NOME DO SOLICITANTE">
 
+      <!-- Sala e Data -->
       <label for="sala">ESCOLHA A SALA:</label>
       <select id="sala" required>
         <option value="Sala 1">SALA 1</option>
@@ -205,13 +208,12 @@
         listaAgendamentos.appendChild(div);
       });
 
+      // Adiciona eventos aos botões de editar e excluir
       document.querySelectorAll('.edit-button').forEach(button => {
-        button.removeEventListener('click', carregarAgendamentoParaEdicao);
         button.addEventListener('click', carregarAgendamentoParaEdicao);
       });
 
       document.querySelectorAll('.delete-button').forEach(button => {
-        button.removeEventListener('click', excluirAgendamento);
         button.addEventListener('click', excluirAgendamento);
       });
     }
@@ -235,20 +237,28 @@
       const id = event.target.getAttribute('data-id');
       editandoId = id;
 
+      // Carregar dados do agendamento para o formulário
       const div = event.target.parentElement;
       document.getElementById('finalidade').value = div.querySelector('strong:nth-child(1)').textContent.split(': ')[1];
       document.getElementById('solicitante').value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[0];
       document.getElementById('nomeSolicitante').value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[1];
       document.getElementById('sala').value = div.querySelector('strong:nth-child(3)').textContent.split(': ')[1];
-      document.getElementById('data').value = div.querySelector('strong:nth-child(4)').textContent.split(': ')[1];
+      document.getElementById('data').value = formatarDataParaInput(div.querySelector('strong:nth-child(4)').textContent.split(': ')[1]);
       document.getElementById('hora').value = div.querySelector('strong:nth-child(5)').textContent.split(': ')[1];
 
       document.getElementById('agendarButton').textContent = 'ATUALIZAR';
     }
 
+    // Função para converter a data no formato dd/mm/aa para o formato aceito pelo input date (yyyy-mm-dd)
+    function formatarDataParaInput(data) {
+      const [dia, mes, ano] = data.split('/');
+      return `20${ano}-${mes}-${dia}`; // Ajusta para o padrão yyyy-mm-dd
+    }
+
+    // Função para formatar a data para dd/mm/aa
     function formatarData(data) {
       const [ano, mes, dia] = data.split('-');
-      return `${dia}/${mes}/${ano}`;
+      return `${dia}/${mes}/${ano.slice(2)}`; // Salva como dd/mm/aa
     }
 
     const form = document.getElementById('agendamentoForm');
@@ -260,7 +270,7 @@
         solicitante: document.getElementById('solicitante').value,
         nomeSolicitante: document.getElementById('nomeSolicitante').value,
         sala: document.getElementById('sala').value,
-        data: formatarData(document.getElementById('data').value),  // Formata a data para dd/mm/aaaa
+        data: formatarData(document.getElementById('data').value),  // Formata a data para dd/mm/aa
         hora: document.getElementById('hora').value
       };
 
