@@ -63,42 +63,6 @@
     .hidden {
       display: none;
     }
-    .planner-button {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .planner-button:hover {
-      background-color: #0056b3;
-    }
-    .planner {
-      display: none;
-      margin-top: 20px;
-    }
-    .planner-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .planner-table th, .planner-table td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-    .back-button {
-      padding: 10px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .back-button:hover {
-      background-color: #218838;
-    }
     .edit-button, .delete-button {
       background-color: #ffc107;
       color: #fff;
@@ -124,8 +88,6 @@
   <div class="container">
     <h1>AGENDAMENTO DE SALAS</h1>
     <form id="agendamentoForm">
-      
-      <!-- Finalidade -->
       <label for="finalidade">FINALIDADE:</label>
       <select id="finalidade" required>
         <option value="">SELECIONE A FINALIDADE</option>
@@ -136,7 +98,6 @@
         <option value="MANUTENÇÃO">MANUTENÇÃO</option>
       </select>
 
-      <!-- Campos adicionais para TCC -->
       <div id="tccFields" class="hidden">
         <label for="temaTcc">TEMA TCC:</label>
         <input type="text" id="temaTcc" placeholder="DIGITE O TEMA DO TCC">
@@ -148,22 +109,17 @@
         <input type="text" id="orientadorTcc" placeholder="DIGITE O NOME DO ORIENTADOR">
       </div>
 
-      <!-- Campo adicional para Manutenção -->
       <div id="manutencaoFields" class="hidden">
         <label for="motivoManutencao">MOTIVO DA MANUTENÇÃO:</label>
         <input type="text" id="motivoManutencao" placeholder="DIGITE O MOTIVO DA MANUTENÇÃO">
       </div>
 
-      <!-- Solicitante -->
       <label for="solicitante">SOLICITANTE:</label>
-      <select id="solicitante" required>
-        <!-- As opções serão preenchidas dinamicamente -->
-      </select>
+      <select id="solicitante" required></select>
 
       <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
       <input type="text" id="nomeSolicitante" required placeholder="DIGITE O NOME DO SOLICITANTE">
 
-      <!-- Sala e Data -->
       <label for="sala">ESCOLHA A SALA:</label>
       <select id="sala" required>
         <option value="Sala 1">SALA 1</option>
@@ -179,28 +135,9 @@
       <button type="submit" id="agendarButton">AGENDAR</button>
     </form>
 
-    <button class="planner-button" id="verMes">VER AGENDAMENTOS MENSAIS</button>
-
     <div class="agendamentos">
       <h2>AGENDAMENTOS CONFIRMADOS:</h2>
       <div id="listaAgendamentos"></div>
-    </div>
-
-    <!-- Planner Mensal -->
-    <div class="planner hidden" id="planner">
-      <h2>PLANNER MENSAL</h2>
-      <table class="planner-table">
-        <thead>
-          <tr>
-            <th>DATA</th>
-            <th>AGENDAMENTOS</th>
-          </tr>
-        </thead>
-        <tbody id="plannerBody">
-          <!-- Agendamentos serão inseridos dinamicamente aqui -->
-        </tbody>
-      </table>
-      <button class="back-button" id="voltar">VOLTAR</button>
     </div>
   </div>
 
@@ -262,11 +199,14 @@
         listaAgendamentos.appendChild(div);
       });
 
+      // Correção: Certifique-se de que os eventos de clique estão sendo atribuídos corretamente
       document.querySelectorAll('.edit-button').forEach(button => {
+        button.removeEventListener('click', carregarAgendamentoParaEdicao); // Remove o listener antigo para evitar duplicação
         button.addEventListener('click', carregarAgendamentoParaEdicao);
       });
 
       document.querySelectorAll('.delete-button').forEach(button => {
+        button.removeEventListener('click', excluirAgendamento); // Remove o listener antigo para evitar duplicação
         button.addEventListener('click', excluirAgendamento);
       });
     }
