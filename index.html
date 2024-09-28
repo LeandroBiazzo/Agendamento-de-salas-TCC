@@ -63,6 +63,42 @@
     .hidden {
       display: none;
     }
+    .planner-button {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .planner-button:hover {
+      background-color: #0056b3;
+    }
+    .planner {
+      display: none;
+      margin-top: 20px;
+    }
+    .planner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .planner-table th, .planner-table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    .back-button {
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .back-button:hover {
+      background-color: #218838;
+    }
     .edit-button, .delete-button {
       background-color: #ffc107;
       color: #fff;
@@ -121,8 +157,7 @@
       <!-- Solicitante -->
       <label for="solicitante">SOLICITANTE:</label>
       <select id="solicitante" required>
-        <option value="Professor A">Professor A</option>
-        <option value="Professor B">Professor B</option>
+        <!-- As opções serão preenchidas dinamicamente -->
       </select>
 
       <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
@@ -144,9 +179,28 @@
       <button type="submit" id="agendarButton">AGENDAR</button>
     </form>
 
+    <button class="planner-button" id="verMes">VER AGENDAMENTOS MENSAIS</button>
+
     <div class="agendamentos">
       <h2>AGENDAMENTOS CONFIRMADOS:</h2>
       <div id="listaAgendamentos"></div>
+    </div>
+
+    <!-- Planner Mensal -->
+    <div class="planner hidden" id="planner">
+      <h2>PLANNER MENSAL</h2>
+      <table class="planner-table">
+        <thead>
+          <tr>
+            <th>DATA</th>
+            <th>AGENDAMENTOS</th>
+          </tr>
+        </thead>
+        <tbody id="plannerBody">
+          <!-- Agendamentos serão inseridos dinamicamente aqui -->
+        </tbody>
+      </table>
+      <button class="back-button" id="voltar">VOLTAR</button>
     </div>
   </div>
 
@@ -208,7 +262,6 @@
         listaAgendamentos.appendChild(div);
       });
 
-      // Adiciona eventos aos botões de editar e excluir
       document.querySelectorAll('.edit-button').forEach(button => {
         button.addEventListener('click', carregarAgendamentoParaEdicao);
       });
@@ -243,22 +296,10 @@
       document.getElementById('solicitante').value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[0];
       document.getElementById('nomeSolicitante').value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[1];
       document.getElementById('sala').value = div.querySelector('strong:nth-child(3)').textContent.split(': ')[1];
-      document.getElementById('data').value = formatarDataParaInput(div.querySelector('strong:nth-child(4)').textContent.split(': ')[1]);
+      document.getElementById('data').value = div.querySelector('strong:nth-child(4)').textContent.split(': ')[1];
       document.getElementById('hora').value = div.querySelector('strong:nth-child(5)').textContent.split(': ')[1];
 
       document.getElementById('agendarButton').textContent = 'ATUALIZAR';
-    }
-
-    // Função para converter a data no formato dd/mm/aa para o formato aceito pelo input date (yyyy-mm-dd)
-    function formatarDataParaInput(data) {
-      const [dia, mes, ano] = data.split('/');
-      return `20${ano}-${mes}-${dia}`; // Ajusta para o padrão yyyy-mm-dd
-    }
-
-    // Função para formatar a data para dd/mm/aa
-    function formatarData(data) {
-      const [ano, mes, dia] = data.split('-');
-      return `${dia}/${mes}/${ano.slice(2)}`; // Salva como dd/mm/aa
     }
 
     const form = document.getElementById('agendamentoForm');
@@ -270,7 +311,7 @@
         solicitante: document.getElementById('solicitante').value,
         nomeSolicitante: document.getElementById('nomeSolicitante').value,
         sala: document.getElementById('sala').value,
-        data: formatarData(document.getElementById('data').value),  // Formata a data para dd/mm/aa
+        data: document.getElementById('data').value,
         hora: document.getElementById('hora').value
       };
 
