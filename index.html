@@ -115,7 +115,13 @@
       </div>
 
       <label for="solicitante">SOLICITANTE:</label>
-      <select id="solicitante" required></select>
+      <select id="solicitante" required>
+        <!-- Aqui você pode adicionar as opções de solicitantes -->
+        <option value="">Selecione o solicitante</option>
+        <option value="Professor A">Professor A</option>
+        <option value="Professor B">Professor B</option>
+        <!-- Você pode carregar mais opções dinamicamente -->
+      </select>
 
       <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
       <input type="text" id="nomeSolicitante" required placeholder="DIGITE O NOME DO SOLICITANTE">
@@ -199,14 +205,13 @@
         listaAgendamentos.appendChild(div);
       });
 
-      // Correção: Certifique-se de que os eventos de clique estão sendo atribuídos corretamente
       document.querySelectorAll('.edit-button').forEach(button => {
-        button.removeEventListener('click', carregarAgendamentoParaEdicao); // Remove o listener antigo para evitar duplicação
+        button.removeEventListener('click', carregarAgendamentoParaEdicao);
         button.addEventListener('click', carregarAgendamentoParaEdicao);
       });
 
       document.querySelectorAll('.delete-button').forEach(button => {
-        button.removeEventListener('click', excluirAgendamento); // Remove o listener antigo para evitar duplicação
+        button.removeEventListener('click', excluirAgendamento);
         button.addEventListener('click', excluirAgendamento);
       });
     }
@@ -230,7 +235,6 @@
       const id = event.target.getAttribute('data-id');
       editandoId = id;
 
-      // Carregar dados do agendamento para o formulário
       const div = event.target.parentElement;
       document.getElementById('finalidade').value = div.querySelector('strong:nth-child(1)').textContent.split(': ')[1];
       document.getElementById('solicitante').value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[0];
@@ -242,6 +246,11 @@
       document.getElementById('agendarButton').textContent = 'ATUALIZAR';
     }
 
+    function formatarData(data) {
+      const [ano, mes, dia] = data.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
     const form = document.getElementById('agendamentoForm');
     form.addEventListener('submit', function(event) {
       event.preventDefault();
@@ -251,7 +260,7 @@
         solicitante: document.getElementById('solicitante').value,
         nomeSolicitante: document.getElementById('nomeSolicitante').value,
         sala: document.getElementById('sala').value,
-        data: document.getElementById('data').value,
+        data: formatarData(document.getElementById('data').value),  // Formata a data para dd/mm/aaaa
         hora: document.getElementById('hora').value
       };
 
