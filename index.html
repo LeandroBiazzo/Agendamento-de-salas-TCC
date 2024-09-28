@@ -202,7 +202,98 @@
       <button class="back-button" id="voltar">VOLTAR</button>
     </div>
   </div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js"></script>
+  <script>
+  // Inicializar Firebase com suas configurações
+  const firebaseConfig = {
+    apiKey: "AIzaSyBw3KtxT-386kduvlDLyCHWYsdc_Ny3j9Y",
+    authDomain: "agendamento-de-sala-c348d.firebaseapp.com",
+    projectId: "agendamento-de-sala-c348d",
+    storageBucket: "agendamento-de-sala-c348d.appspot.com",
+    messagingSenderId: "1051108935402",
+    appId: "1:1051108935402:web:d87c0ce75b27a6908f3993"
+  };
+    <script>
+  // Função para salvar agendamentos no Firestore
+  async function salvarAgendamento(agendamento) {
+    try {
+      // Adiciona o agendamento ao Firestore
+      await db.collection('agendamentos').add(agendamento);
+      alert('Agendamento salvo com sucesso!');
+      listarAgendamentos(); // Atualiza a lista de agendamentos
+    } catch (error) {
+      console.error('Erro ao salvar agendamento: ', error);
+      alert('Erro ao salvar agendamento. Tente novamente.');
+    }
+  }
 
+  // Função para listar agendamentos do Firestore
+  async function listarAgendamentos() {
+    const listaAgendamentos = document.getElementById('listaAgendamentos');
+    listaAgendamentos.innerHTML = ''; // Limpar a lista antes de exibir
+
+    // Busca os agendamentos no Firestore
+    const querySnapshot = await db.collection('agendamentos').get();
+    querySnapshot.forEach((doc) => {
+      const agendamento = doc.data();
+      const div = document.createElement('div');
+      div.classList.add('agendamento-item');
+      div.innerHTML = `
+        <strong>FINALIDADE:</strong> ${agendamento.finalidade}<br>
+        <strong>SOLICITANTE:</strong> ${agendamento.solicitante} - ${agendamento.nomeSolicitante}<br>
+        <strong>SALA:</strong> ${agendamento.sala}<br>
+        <strong>DATA:</strong> ${agendamento.data}<br>
+        <strong>HORA:</strong> ${agendamento.hora}
+      `;
+      listaAgendamentos.appendChild(div);
+    });
+  }
+
+  // Quando o formulário for enviado
+  const form = document.getElementById('agendamentoForm');
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    // Capturar os dados do formulário
+    const finalidade = document.getElementById('finalidade').value;
+    const solicitante = document.getElementById('solicitante').value;
+    const nomeSolicitante = document.getElementById('nomeSolicitante').value;
+    const sala = document.getElementById('sala').value;
+    const data = document.getElementById('data').value;
+    const hora = document.getElementById('hora').value;
+
+    // Verificar se todos os campos obrigatórios foram preenchidos
+    if (!finalidade || !solicitante || !nomeSolicitante || !sala || !data || !hora) {
+      alert('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    // Dados do agendamento a serem salvos
+    const agendamento = {
+      finalidade,
+      solicitante,
+      nomeSolicitante,
+      sala,
+      data,
+      hora
+    };
+
+    // Chamar a função para salvar o agendamento no Firestore
+    salvarAgendamento(agendamento);
+
+    // Limpar o formulário após o envio
+    form.reset();
+  });
+
+  // Carregar os agendamentos quando a página carregar
+  window.onload = listarAgendamentos;
+</script>
+  // Inicializar o Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
   <script>
     const form = document.getElementById('agendamentoForm');
     const listaAgendamentos = document.getElementById('listaAgendamentos');
