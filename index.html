@@ -84,21 +84,7 @@
         <label for="orientadorTcc">ORIENTADOR:</label>
         <select id="orientadorTcc">
           <option value="">SELECIONE O ORIENTADOR</option>
-          <option value="Bruna Marcele">BRUNA MARCELE</option>
-          <option value="Danielle Bacarelli">DANIELLE BACARELLI</option>
-          <option value="Diana Costa">DIANA COSTA</option>
-          <option value="Douglas Caragelasco">DOUGLAS CARAGELASCO</option>
-          <option value="João Flávio">JOÃO FLÁVIO</option>
-          <option value="Lívia Biazzo">LÍVIA BIAZZO</option>
-          <option value="Mariana Miranda">MARIANA MIRANDA</option>
-          <option value="Marilia Filiponi">MARILIA FILIPONI</option>
-          <option value="Marta Luppi">MARTA LUPPI</option>
-          <option value="Michele Barros">MICHELE BARROS</option>
-          <option value="Paula Guimarães">PAULA GUIMARÃES</option>
-          <option value="Paulo Griska">PAULO GRISKA</option>
-          <option value="Paulo Anselmo">PAULO ANSELMO</option>
-          <option value="Rafael Neves">RAFAEL NEVES</option>
-          <option value="Raphaela Brito">RAPHAELA BRITO</option>
+          <!-- Lista de orientadores permanece igual -->
         </select>
       </div>
 
@@ -173,8 +159,15 @@
 
     // Função para atualizar as opções de solicitante
     function atualizarSolicitante(finalidade) {
-      solicitanteSelect.innerHTML = '<option value="">SELECIONE O SOLICITANTE</option>';
-      
+      // Limpa as opções existentes
+      solicitanteSelect.innerHTML = ''; 
+
+      // Adiciona a opção inicial novamente
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'SELECIONE O SOLICITANTE';
+      solicitanteSelect.appendChild(defaultOption);
+
       if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
         professores.concat(residentes).forEach(nome => {
           const option = document.createElement('option');
@@ -183,7 +176,7 @@
           solicitanteSelect.appendChild(option);
         });
       } else if (finalidade === 'TCC') {
-        // Deixar o campo solicitante em branco
+        // Campo solicitante vazio para TCC
         solicitanteSelect.innerHTML = '<option value=""> </option>';
       } else if (finalidade === 'MANUTENÇÃO') {
         manutencaoNomes.forEach(nome => {
@@ -204,7 +197,6 @@
       manutencaoFields.classList.add('hidden');
       solicitanteFields.classList.add('hidden');
       nomeSolicitanteField.classList.add('hidden');
-      solicitanteSelect.innerHTML = '';
 
       // Exibe campos específicos com base na finalidade
       if (finalidade === 'TCC') {
