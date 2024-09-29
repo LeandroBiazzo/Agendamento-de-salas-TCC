@@ -125,10 +125,21 @@
         <label for="orientadorTcc">ORIENTADOR:</label>
         <select id="orientadorTcc">
           <option value="">SELECIONE O ORIENTADOR</option>
-          <!-- Nomes de professores pré-definidos -->
-          <option value="Professor A">Professor A</option>
-          <option value="Professor B">Professor B</option>
-          <option value="Professor C">Professor C</option>
+          <!-- Nomes de professores atualizados -->
+          <option value="BRUNA MARCELE">BRUNA MARCELE</option>
+          <option value="DANIELLE BACARELLI">DANIELLE BACARELLI</option>
+          <option value="DIANA COSTA">DIANA COSTA</option>
+          <option value="DOUGLAS CARAGELASCO">DOUGLAS CARAGELASCO</option>
+          <option value="JOÃO FLÁVIO">JOÃO FLÁVIO</option>
+          <option value="LÍVIA BIAZZO">LÍVIA BIAZZO</option>
+          <option value="MARIANA MIRANDA">MARIANA MIRANDA</option>
+          <option value="MARILIA FILIPONI">MARILIA FILIPONI</option>
+          <option value="MARTA LUPPI">MARTA LUPPI</option>
+          <option value="MICHELE BARROS">MICHELE BARROS</option>
+          <option value="PAULA GUIMARÃES">PAULA GUIMARÃES</option>
+          <option value="PAULO GRISKA">PAULO GRISKA</option>
+          <option value="PAULO ANSELMO">PAULO ANSELMO</option>
+          <option value="RAFAEL NEVES">RAFAEL NEVES</option>
         </select>
       </div>
 
@@ -271,7 +282,7 @@
 
       agendamentosFuturos.innerHTML = ''; // Limpar a lista antes de popular
 
-      agendamentosSnapshot.forEach(async (doc) => {
+      agendamentosSnapshot.forEach((doc) => {
         const agendamento = doc.data();
         const agendamentoData = agendamento.data;
 
