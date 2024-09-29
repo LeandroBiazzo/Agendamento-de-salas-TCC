@@ -322,22 +322,9 @@
     async function carregarAgendamentos() {
       agendamentosLista.innerHTML = ''; 
       const querySnapshot = await getDocs(collection(db, 'agendamentos'));
-      const agendamentos = [];
-
       querySnapshot.forEach((doc) => {
         const agendamento = doc.data();
-        agendamentos.push({ id: doc.id, ...agendamento });
-      });
-
-      // Ordena os agendamentos por data e hora
-      agendamentos.sort((a, b) => {
-        const dateA = new Date(`${a.data}T${a.hora}`);
-        const dateB = new Date(`${b.data}T${b.hora}`);
-        return dateA - dateB;
-      });
-
-      agendamentos.forEach(({ id, ...agendamento }) => {
-        adicionarVisualizacao(id, agendamento);
+        adicionarVisualizacao(doc.id, agendamento);
       });
     }
 
@@ -348,7 +335,7 @@
 
       // Formatar a data no formato dd/mm/aa
       const [ano, mes, dia] = agendamento.data.split('-');
-      const dataFormatada = `${dia}/${mes}/${ano.slice(-2)}`;
+      const dataFormatada = `${dia}/${mes}/${ano}`;
 
       novoAgendamento.innerHTML = `
         <h3>Agendamento Reservado</h3>
