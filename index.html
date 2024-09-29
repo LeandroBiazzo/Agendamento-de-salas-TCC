@@ -100,6 +100,9 @@
 
       <!-- Campos adicionais para TCC -->
       <div id="tccFields" class="hidden">
+        <label for="nomeAluno">NOME DO ALUNO:</label>
+        <input type="text" id="nomeAluno" placeholder="DIGITE O NOME DO ALUNO">
+
         <label for="temaTcc">TEMA TCC:</label>
         <input type="text" id="temaTcc" placeholder="DIGITE O TEMA DO TCC">
 
@@ -118,12 +121,10 @@
         <input type="text" id="motivoManutencao" placeholder="DIGITE O MOTIVO DA MANUTENÇÃO">
       </div>
 
-      <!-- Campos adicionais para REUNIÃO -->
+      <!-- Campos adicionais para SOLICITANTE -->
       <div id="solicitanteFields" class="hidden">
         <label for="solicitante">SOLICITANTE:</label>
-        <select id="solicitante">
-          <option value="">SELECIONE O SOLICITANTE</option>
-        </select>
+        <input type="text" id="solicitante" placeholder="DIGITE O NOME DO SOLICITANTE">
       </div>
 
       <div id="nomeSolicitanteField" class="hidden">
@@ -141,8 +142,11 @@
       <label for="data">ESCOLHA A DATA:</label>
       <input type="date" id="data" required>
 
-      <label for="hora">ESCOLHA O HORÁRIO:</label>
-      <input type="time" id="hora" required>
+      <label for="horaInicio">HORÁRIO DE INÍCIO:</label>
+      <input type="time" id="horaInicio" required>
+
+      <label for="horaFim">HORÁRIO DE FIM:</label>
+      <input type="time" id="horaFim" required>
 
       <button type="submit" id="agendarButton">AGENDAR</button>
     </form>
@@ -181,12 +185,7 @@
     ];
 
     const solicitantes = [
-      'Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 
-      'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 
-      'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 
-      'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito', 'R1 Clin Peq.', 
-      'R2 Clin Peq.', 'R1 Clin Grandes', 'R2 Clin Grandes', 'R1 Imagem', 
-      'R2 Imagem', 'R1 Anest', 'R2 Anest'
+      'Leandro Biazzo', 'Ellen Gorne'
     ];
 
     // Preenche a lista de orientadores no campo ORIENTADOR
@@ -198,18 +197,6 @@
         option.value = orientador;
         option.textContent = orientador;
         orientadorSelect.appendChild(option);
-      });
-    }
-
-    // Preenche a lista de solicitantes no campo SOLICITANTE
-    function preencherSolicitantes() {
-      const solicitanteSelect = document.getElementById('solicitante');
-      solicitanteSelect.innerHTML = '<option value="">SELECIONE O SOLICITANTE</option>'; // Limpa e adiciona o placeholder
-      solicitantes.forEach(solicitante => {
-        const option = document.createElement('option');
-        option.value = solicitante;
-        option.textContent = solicitante;
-        solicitanteSelect.appendChild(option);
       });
     }
 
@@ -232,13 +219,12 @@
         preencherOrientadores(); // Preenche os orientadores quando "TCC" for selecionado
       } else if (finalidade === 'MANUTENÇÃO') {
         document.getElementById('manutencaoFields').classList.remove('hidden');
+        document.getElementById('solicitanteFields').classList.remove('hidden');
       } else if (finalidade === 'REUNIÃO') {
         document.getElementById('nomeSolicitanteField').classList.remove('hidden');
         document.getElementById('solicitanteFields').classList.remove('hidden');
-        preencherSolicitantes();
       } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
         document.getElementById('solicitanteFields').classList.remove('hidden');
-        document.getElementById('solicitante').innerHTML = '<option value="">Nenhum</option>';
       }
     });
 
@@ -251,15 +237,24 @@
     }
 
     // Função para verificar conflitos de horário
-    async function verificarConflito(sala, data, hora) {
-      const q = query(collection(db, 'agendamentos'), where('data', '==', data), where('hora', '==', hora));
+    async function verificarConflito(sala, data, horaInicio, horaFim) {
+      const q = query(collection(db, 'agendamentos'), where('data', '==', data), where('sala', '==', sala));
       const querySnapshot = await getDocs(q);
 
-      // Se houver agendamentos no mesmo horário, verificar se há conflito com a sala
+      // Converter horários para minutos desde meia-noite
+      const inicioNovo = converterParaMinutos(horaInicio);
+      const fimNovo = converterParaMinutos(horaFim);
+
       let conflito = false;
       querySnapshot.forEach((doc) => {
         const agendamento = doc.data();
-        if (agendamento.sala === sala) {
+        const inicioExistente = converterParaMinutos(agendamento.horaInicio);
+        const fimExistente = converterParaMinutos(agendamento.horaFim);
+
+        // Verifica se há sobreposição de horários
+        if ((inicioNovo >= inicioExistente && inicioNovo < fimExistente) ||
+            (fimNovo > inicioExistente && fimNovo <= fimExistente) ||
+            (inicioNovo <= inicioExistente && fimNovo >= fimExistente)) {
           conflito = true;
         }
       });
@@ -267,11 +262,18 @@
       return conflito;
     }
 
+    // Função auxiliar para converter horário para minutos desde meia-noite
+    function converterParaMinutos(hora) {
+      const [h, m] = hora.split(':');
+      return parseInt(h) * 60 + parseInt(m);
+    }
+
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
 
       const data = document.getElementById('data').value;
-      const hora = document.getElementById('hora').value;
+      const horaInicio = document.getElementById('horaInicio').value;
+      const horaFim = document.getElementById('horaFim').value;
       const sala = document.getElementById('sala').value;
 
       // Validação para não permitir datas passadas
@@ -281,23 +283,26 @@
       }
 
       // Verificar conflito de sala no mesmo horário
-      const conflito = await verificarConflito(sala, data, hora);
+      const conflito = await verificarConflito(sala, data, horaInicio, horaFim);
       if (conflito) {
-        alert('Já existe um agendamento para esta sala no mesmo horário. Escolha outro horário ou sala.');
+        alert('Já existe um agendamento para esta sala que conflita com o horário escolhido. Escolha outro horário ou sala.');
         return;
       }
 
       const finalidade = document.getElementById('finalidade').value;
       const solicitante = document.getElementById('solicitante').value;
       const nomeSolicitante = document.getElementById('nomeSolicitante').value || '';
+      const nomeAluno = document.getElementById('nomeAluno').value || '';
 
       const agendamento = {
         finalidade,
         solicitante,
         nomeSolicitante,
+        nomeAluno,
         sala,
         data,
-        hora,
+        horaInicio,
+        horaFim
       };
 
       try {
@@ -322,9 +327,22 @@
     async function carregarAgendamentos() {
       agendamentosLista.innerHTML = ''; 
       const querySnapshot = await getDocs(collection(db, 'agendamentos'));
+      const agendamentos = [];
+
       querySnapshot.forEach((doc) => {
         const agendamento = doc.data();
-        adicionarVisualizacao(doc.id, agendamento);
+        agendamentos.push({ id: doc.id, ...agendamento });
+      });
+
+      // Ordena os agendamentos por data e hora de início
+      agendamentos.sort((a, b) => {
+        const dateA = new Date(`${a.data}T${a.horaInicio}`);
+        const dateB = new Date(`${b.data}T${b.horaInicio}`);
+        return dateA - dateB;
+      });
+
+      agendamentos.forEach(({ id, ...agendamento }) => {
+        adicionarVisualizacao(id, agendamento);
       });
     }
 
@@ -335,16 +353,18 @@
 
       // Formatar a data no formato dd/mm/aa
       const [ano, mes, dia] = agendamento.data.split('-');
-      const dataFormatada = `${dia}/${mes}/${ano}`;
+      const dataFormatada = `${dia}/${mes}/${ano.slice(-2)}`;
 
       novoAgendamento.innerHTML = `
         <h3>Agendamento Reservado</h3>
         <div class="agendamento-item"><strong>Finalidade:</strong> ${agendamento.finalidade}</div>
         <div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>
         ${agendamento.finalidade === 'REUNIÃO' ? `<div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>` : ''}
+        ${agendamento.finalidade === 'TCC' ? `<div class="agendamento-item"><strong>Nome do Aluno:</strong> ${agendamento.nomeAluno || ''}</div>` : ''}
         <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
         <div class="agendamento-item"><strong>Data:</strong> ${dataFormatada}</div>
-        <div class="agendamento-item"><strong>Hora:</strong> ${agendamento.hora}</div>
+        <div class="agendamento-item"><strong>Hora de Início:</strong> ${agendamento.horaInicio}</div>
+        <div class="agendamento-item"><strong>Hora de Fim:</strong> ${agendamento.horaFim}</div>
         <div class="agendamento-buttons">
           <button onclick="editarAgendamento('${id}')">EDITAR AGENDAMENTO</button>
           <button onclick="excluirAgendamento('${id}')" class="delete-button">EXCLUIR AGENDAMENTO</button>
@@ -362,10 +382,15 @@
         document.getElementById('finalidade').value = agendamento.finalidade;
         document.getElementById('solicitante').value = agendamento.solicitante || '';
         document.getElementById('nomeSolicitante').value = agendamento.nomeSolicitante || '';
+        document.getElementById('nomeAluno').value = agendamento.nomeAluno || '';
         document.getElementById('sala').value = agendamento.sala;
         document.getElementById('data').value = agendamento.data;
-        document.getElementById('hora').value = agendamento.hora;
+        document.getElementById('horaInicio').value = agendamento.horaInicio;
+        document.getElementById('horaFim').value = agendamento.horaFim;
         agendamentoId = id;
+
+        // Mostrar campos específicos baseados na finalidade
+        document.getElementById('finalidade').dispatchEvent(new Event('change'));
       }
     };
 
