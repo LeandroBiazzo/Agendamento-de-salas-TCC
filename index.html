@@ -67,19 +67,6 @@
     .delete-button:hover {
       background-color: #c82333;
     }
-    .agendamento-visualizacao {
-      margin-top: 30px;
-      padding: 20px;
-      background-color: #e9ecef;
-      border-radius: 5px;
-      display: none; /* Inicialmente escondido */
-    }
-    .agendamento-item {
-      margin-bottom: 10px;
-    }
-    .agendamento-item strong {
-      color: #333;
-    }
   </style>
 </head>
 <body>
@@ -149,17 +136,6 @@
         <button type="button" id="excluirButton" class="delete-button">EXCLUIR AGENDAMENTO</button>
       </div>
     </form>
-
-    <!-- Seção de visualização do agendamento reservado -->
-    <div id="agendamentoVisualizacao" class="agendamento-visualizacao">
-      <h3>Agendamento Reservado</h3>
-      <div class="agendamento-item"><strong>Finalidade:</strong> <span id="visualizacaoFinalidade"></span></div>
-      <div class="agendamento-item"><strong>Solicitante:</strong> <span id="visualizacaoSolicitante"></span></div>
-      <div class="agendamento-item hidden" id="visualizacaoNomeSolicitanteContainer"><strong>Nome do Solicitante:</strong> <span id="visualizacaoNomeSolicitante"></span></div>
-      <div class="agendamento-item"><strong>Sala:</strong> <span id="visualizacaoSala"></span></div>
-      <div class="agendamento-item"><strong>Data:</strong> <span id="visualizacaoData"></span></div>
-      <div class="agendamento-item"><strong>Hora:</strong> <span id="visualizacaoHora"></span></div>
-    </div>
   </div>
 
   <script type="module">
@@ -188,16 +164,6 @@
     const nomeSolicitanteField = document.getElementById('nomeSolicitanteField');
     const solicitanteSelect = document.getElementById('solicitante');
     const nomeSolicitanteInput = document.getElementById('nomeSolicitante');
-
-    // Elementos da visualização do agendamento
-    const agendamentoVisualizacao = document.getElementById('agendamentoVisualizacao');
-    const visualizacaoFinalidade = document.getElementById('visualizacaoFinalidade');
-    const visualizacaoSolicitante = document.getElementById('visualizacaoSolicitante');
-    const visualizacaoNomeSolicitanteContainer = document.getElementById('visualizacaoNomeSolicitanteContainer');
-    const visualizacaoNomeSolicitante = document.getElementById('visualizacaoNomeSolicitante');
-    const visualizacaoSala = document.getElementById('visualizacaoSala');
-    const visualizacaoData = document.getElementById('visualizacaoData');
-    const visualizacaoHora = document.getElementById('visualizacaoHora');
 
     // Listas de solicitantes
     const professores = ['Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito'];
@@ -296,10 +262,6 @@
           actionButtons.classList.remove('hidden'); // Mostrar botões de ação
         }
         document.getElementById('agendamentoForm').reset();
-
-        // Atualizar a visualização do agendamento
-        atualizarVisualizacao(agendamento);
-
       } catch (error) {
         console.error('Erro ao salvar o agendamento:', error);
         alert('Erro ao salvar o agendamento, tente novamente.');
@@ -340,10 +302,6 @@
         atualizarSolicitante(agendamento.finalidade);
         alert('Agendamento carregado para edição.');
         actionButtons.classList.remove('hidden'); // Mostrar botões de ação ao carregar agendamento
-
-        // Atualizar a visualização do agendamento
-        atualizarVisualizacao(agendamento);
-
       } else {
         alert('Nenhum agendamento encontrado para edição.');
       }
@@ -362,35 +320,11 @@
         document.getElementById('agendamentoForm').reset();
         actionButtons.classList.add('hidden'); // Esconder os botões de ação após exclusão
         agendamentoId = null; // Resetar ID após exclusão
-
-        // Esconder a visualização do agendamento
-        agendamentoVisualizacao.style.display = 'none';
-
       } catch (error) {
         console.error('Erro ao excluir o agendamento:', error);
         alert('Erro ao excluir o agendamento, tente novamente.');
       }
     });
-
-    // Função para atualizar a visualização do agendamento
-    function atualizarVisualizacao(agendamento) {
-      visualizacaoFinalidade.textContent = agendamento.finalidade;
-      visualizacaoSolicitante.textContent = agendamento.solicitante || '';
-      visualizacaoNomeSolicitante.textContent = agendamento.nomeSolicitante || '';
-      visualizacaoSala.textContent = agendamento.sala;
-      visualizacaoData.textContent = agendamento.data;
-      visualizacaoHora.textContent = agendamento.hora;
-
-      // Mostrar ou esconder o campo "Nome do Solicitante" com base na finalidade
-      if (agendamento.finalidade === 'REUNIÃO') {
-        visualizacaoNomeSolicitanteContainer.classList.remove('hidden');
-      } else {
-        visualizacaoNomeSolicitanteContainer.classList.add('hidden');
-      }
-
-      // Mostrar a visualização do agendamento
-      agendamentoVisualizacao.style.display = 'block';
-    }
   </script>
 
 </body>
