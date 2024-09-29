@@ -222,7 +222,6 @@
         document.getElementById('solicitanteFields').classList.remove('hidden');
       } else if (finalidade === 'REUNIÃO') {
         document.getElementById('nomeSolicitanteField').classList.remove('hidden');
-        document.getElementById('solicitanteFields').classList.remove('hidden');
       } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
         document.getElementById('solicitanteFields').classList.remove('hidden');
       }
@@ -293,12 +292,20 @@
       const solicitante = document.getElementById('solicitante').value;
       const nomeSolicitante = document.getElementById('nomeSolicitante').value || '';
       const nomeAluno = document.getElementById('nomeAluno').value || '';
+      const temaTcc = document.getElementById('temaTcc').value || '';
+      const bancaTcc = document.getElementById('bancaTcc').value || '';
+      const orientadorTcc = document.getElementById('orientadorTcc').value || '';
+      const motivoManutencao = document.getElementById('motivoManutencao').value || '';
 
       const agendamento = {
         finalidade,
         solicitante,
         nomeSolicitante,
         nomeAluno,
+        temaTcc,
+        bancaTcc,
+        orientadorTcc,
+        motivoManutencao,
         sala,
         data,
         horaInicio,
@@ -358,9 +365,18 @@
       novoAgendamento.innerHTML = `
         <h3>Agendamento Reservado</h3>
         <div class="agendamento-item"><strong>Finalidade:</strong> ${agendamento.finalidade}</div>
-        <div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>
+        ${agendamento.finalidade === 'AULA' || agendamento.finalidade === 'PROVA' || agendamento.finalidade === 'DISCUSSÃO DE CASO' ? `<div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>` : ''}
         ${agendamento.finalidade === 'REUNIÃO' ? `<div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>` : ''}
-        ${agendamento.finalidade === 'TCC' ? `<div class="agendamento-item"><strong>Nome do Aluno:</strong> ${agendamento.nomeAluno || ''}</div>` : ''}
+        ${agendamento.finalidade === 'TCC' ? `
+          <div class="agendamento-item"><strong>Nome do Aluno:</strong> ${agendamento.nomeAluno || ''}</div>
+          <div class="agendamento-item"><strong>Tema TCC:</strong> ${agendamento.temaTcc || ''}</div>
+          <div class="agendamento-item"><strong>Banca TCC:</strong> ${agendamento.bancaTcc || ''}</div>
+          <div class="agendamento-item"><strong>Orientador:</strong> ${agendamento.orientadorTcc || ''}</div>
+        ` : ''}
+        ${agendamento.finalidade === 'MANUTENÇÃO' ? `
+          <div class="agendamento-item"><strong>Motivo da Manutenção:</strong> ${agendamento.motivoManutencao || ''}</div>
+          <div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>
+        ` : ''}
         <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
         <div class="agendamento-item"><strong>Data:</strong> ${dataFormatada}</div>
         <div class="agendamento-item"><strong>Hora de Início:</strong> ${agendamento.horaInicio}</div>
@@ -383,6 +399,10 @@
         document.getElementById('solicitante').value = agendamento.solicitante || '';
         document.getElementById('nomeSolicitante').value = agendamento.nomeSolicitante || '';
         document.getElementById('nomeAluno').value = agendamento.nomeAluno || '';
+        document.getElementById('temaTcc').value = agendamento.temaTcc || '';
+        document.getElementById('bancaTcc').value = agendamento.bancaTcc || '';
+        document.getElementById('orientadorTcc').value = agendamento.orientadorTcc || '';
+        document.getElementById('motivoManutencao').value = agendamento.motivoManutencao || '';
         document.getElementById('sala').value = agendamento.sala;
         document.getElementById('data').value = agendamento.data;
         document.getElementById('horaInicio').value = agendamento.horaInicio;
