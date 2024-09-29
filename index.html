@@ -31,7 +31,7 @@
       margin: 10px 0 5px;
       font-weight: bold;
     }
-    input, select, textarea {
+    input, select {
       padding: 10px;
       margin-bottom: 20px;
       border: 1px solid #ccc;
@@ -50,71 +50,8 @@
     button:hover {
       background-color: #218838;
     }
-    .agendamentos {
-      margin-top: 30px;
-    }
-    .agendamento-item {
-      background-color: #e9ecef;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      position: relative;
-    }
-    .delete-button, .edit-button {
-      position: absolute;
-      top: 10px;
-      padding: 5px 10px;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .delete-button {
-      right: 10px;
-      background-color: red;
-    }
-    .edit-button {
-      right: 80px;
-      background-color: blue;
-    }
     .hidden {
       display: none;
-    }
-    .planner-button {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .planner-button:hover {
-      background-color: #0056b3;
-    }
-    .planner {
-      display: none;
-      margin-top: 20px;
-    }
-    .planner-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .planner-table th, .planner-table td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-    .back-button {
-      padding: 10px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .back-button:hover {
-      background-color: #218838;
     }
   </style>
 </head>
@@ -132,6 +69,7 @@
         <option value="TCC">TCC</option>
         <option value="PROVA">PROVA</option>
         <option value="DISCUSSÃO DE CASO">DISCUSSÃO DE CASO</option>
+        <option value="REUNIÃO">REUNIÃO</option>
         <option value="MANUTENÇÃO">MANUTENÇÃO</option>
       </select>
 
@@ -144,7 +82,24 @@
         <input type="text" id="bancaTcc" placeholder="DIGITE OS INTEGRANTES DA BANCA">
 
         <label for="orientadorTcc">ORIENTADOR:</label>
-        <input type="text" id="orientadorTcc" placeholder="DIGITE O NOME DO ORIENTADOR">
+        <select id="orientadorTcc">
+          <option value="">SELECIONE O ORIENTADOR</option>
+          <option value="Bruna Marcele">BRUNA MARCELE</option>
+          <option value="Danielle Bacarelli">DANIELLE BACARELLI</option>
+          <option value="Diana Costa">DIANA COSTA</option>
+          <option value="Douglas Caragelasco">DOUGLAS CARAGELASCO</option>
+          <option value="João Flávio">JOÃO FLÁVIO</option>
+          <option value="Lívia Biazzo">LÍVIA BIAZZO</option>
+          <option value="Mariana Miranda">MARIANA MIRANDA</option>
+          <option value="Marilia Filiponi">MARILIA FILIPONI</option>
+          <option value="Marta Luppi">MARTA LUPPI</option>
+          <option value="Michele Barros">MICHELE BARROS</option>
+          <option value="Paula Guimarães">PAULA GUIMARÃES</option>
+          <option value="Paulo Griska">PAULO GRISKA</option>
+          <option value="Paulo Anselmo">PAULO ANSELMO</option>
+          <option value="Rafael Neves">RAFAEL NEVES</option>
+          <option value="Raphaela Brito">RAPHAELA BRITO</option>
+        </select>
       </div>
 
       <!-- Campo adicional para Manutenção -->
@@ -154,13 +109,18 @@
       </div>
 
       <!-- Solicitante -->
-      <label for="solicitante">SOLICITANTE:</label>
-      <select id="solicitante" required>
-        <!-- As opções serão preenchidas dinamicamente -->
-      </select>
+      <div id="solicitanteFields" class="hidden">
+        <label for="solicitante">SOLICITANTE:</label>
+        <select id="solicitante">
+          <option value="">SELECIONE O SOLICITANTE</option>
+        </select>
+      </div>
 
-      <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
-      <input type="text" id="nomeSolicitante" required placeholder="DIGITE O NOME DO SOLICITANTE">
+      <!-- Campo de Nome do Solicitante para Reunião -->
+      <div id="nomeSolicitanteField" class="hidden">
+        <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
+        <input type="text" id="nomeSolicitante" placeholder="DIGITE O NOME DO SOLICITANTE">
+      </div>
 
       <!-- Sala e Data -->
       <label for="sala">ESCOLHA A SALA:</label>
@@ -177,234 +137,134 @@
 
       <button type="submit" id="agendarButton">AGENDAR</button>
     </form>
-
-    <button class="planner-button" id="verMes">VER AGENDAMENTOS MENSAIS</button>
-
-    <div class="agendamentos">
-      <h2>AGENDAMENTOS CONFIRMADOS:</h2>
-      <div id="listaAgendamentos"></div>
-    </div>
-
-    <!-- Planner Mensal -->
-    <div class="planner hidden" id="planner">
-      <h2>PLANNER MENSAL</h2>
-      <table class="planner-table">
-        <thead>
-          <tr>
-            <th>DATA</th>
-            <th>AGENDAMENTOS</th>
-          </tr>
-        </thead>
-        <tbody id="plannerBody">
-          <!-- Agendamentos serão inseridos dinamicamente aqui -->
-        </tbody>
-      </table>
-      <button class="back-button" id="voltar">VOLTAR</button>
-    </div>
   </div>
 
   <script type="module">
-    // Firebase SDK v9 (modular)
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js';
-    import { getFirestore, doc, collection, addDoc, getDocs, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js';
+    // Importação do Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js";
 
-    // Configuração do Firebase (Substitua pelos seus valores)
+    // Configuração do Firebase
     const firebaseConfig = {
-      apiKey: "SUA_API_KEY",
-      authDomain: "SEU_AUTH_DOMAIN",
-      projectId: "SEU_PROJECT_ID",
-      storageBucket: "SEU_STORAGE_BUCKET",
-      messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-      appId: "SEU_APP_ID"
+      apiKey: "AIzaSyBw3KtxT-386kduvlDLyCHWYsdc_Ny3j9Y",
+      authDomain: "agendamento-de-sala-c348d.firebaseapp.com",
+      projectId: "agendamento-de-sala-c348d",
+      storageBucket: "agendamento-de-sala-c348d.appspot.com",
+      messagingSenderId: "1051108935402",
+      appId: "1:1051108935402:web:d87c0ce75b27a6908f3993"
     };
 
-    // Inicializando o Firebase
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const form = document.getElementById('agendamentoForm');
-    const listaAgendamentos = document.getElementById('listaAgendamentos');
-    const agendarButton = document.getElementById('agendarButton');
-    const verMesBtn = document.getElementById('verMes');
-    const planner = document.getElementById('planner');
-    const plannerBody = document.getElementById('plannerBody');
-    const voltarBtn = document.getElementById('voltar');
-
     const finalidadeSelect = document.getElementById('finalidade');
+    const tccFields = document.getElementById('tccFields');
+    const manutencaoFields = document.getElementById('manutencaoFields');
+    const solicitanteFields = document.getElementById('solicitanteFields');
+    const nomeSolicitanteField = document.getElementById('nomeSolicitanteField');
     const solicitanteSelect = document.getElementById('solicitante');
     const nomeSolicitanteInput = document.getElementById('nomeSolicitante');
 
-    const tccFields = document.getElementById('tccFields');
-    const manutencaoFields = document.getElementById('manutencaoFields');
+    // Listas de solicitantes
+    const professores = ['Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito'];
+    const residentes = ['R1 CLIN. PEQ', 'R2 CLIN. PEQ', 'R1 ANEST', 'R2 ANEST', 'R1 IMAGEM', 'R2 IMAGEM', 'R1 CLIN. GRANDES', 'R2 CLIN. GRANDES'];
+    const manutencaoNomes = ['Leandro Biazzo', 'Ellen Gorne'];
 
-    const temaTcc = document.getElementById('temaTcc');
-    const bancaTcc = document.getElementById('bancaTcc');
-    const orientadorTcc = document.getElementById('orientadorTcc');
-    const motivoManutencao = document.getElementById('motivoManutencao');
-
-    let editandoId = null; // Para armazenar o ID do item em edição
-
-    // Função para salvar ou atualizar um agendamento
-    async function salvarAgendamento(agendamento) {
-      try {
-        if (editandoId) {
-          const agendamentoRef = doc(db, "agendamentos", editandoId);
-          await updateDoc(agendamentoRef, agendamento);
-          alert('Agendamento atualizado com sucesso!');
-        } else {
-          await addDoc(collection(db, 'agendamentos'), agendamento);
-          alert('Agendamento salvo com sucesso!');
-        }
-        listarAgendamentos();
-        editandoId = null;
-      } catch (error) {
-        console.error('Erro ao salvar agendamento:', error);
-        alert('Erro ao salvar agendamento. Tente novamente.');
+    // Função para atualizar as opções de solicitante
+    function atualizarSolicitante(finalidade) {
+      solicitanteSelect.innerHTML = '<option value="">SELECIONE O SOLICITANTE</option>';
+      
+      if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
+        professores.concat(residentes).forEach(nome => {
+          const option = document.createElement('option');
+          option.value = nome;
+          option.textContent = nome;
+          solicitanteSelect.appendChild(option);
+        });
+      } else if (finalidade === 'TCC') {
+        // Deixar o campo solicitante em branco
+        solicitanteSelect.innerHTML = '<option value=""> </option>';
+      } else if (finalidade === 'MANUTENÇÃO') {
+        manutencaoNomes.forEach(nome => {
+          const option = document.createElement('option');
+          option.value = nome;
+          option.textContent = nome;
+          solicitanteSelect.appendChild(option);
+        });
       }
     }
 
-    // Função para listar todos os agendamentos
-    async function listarAgendamentos() {
-      listaAgendamentos.innerHTML = ''; // Limpa a lista antes de adicionar novos itens
+    // Manipula a mudança de finalidade
+    finalidadeSelect.addEventListener('change', function () {
+      const finalidade = finalidadeSelect.value;
 
-      const querySnapshot = await getDocs(collection(db, 'agendamentos'));
-      querySnapshot.forEach(doc => {
-        const agendamento = doc.data();
-        const div = document.createElement('div');
-        div.classList.add('agendamento-item');
-        div.innerHTML = `
-          <strong>FINALIDADE:</strong> ${agendamento.finalidade}<br>
-          ${agendamento.finalidade === 'TCC' ? `<strong>TEMA TCC:</strong> ${agendamento.tema}<br><strong>INTEGRANTES DA BANCA:</strong> ${agendamento.banca}<br><strong>ORIENTADOR:</strong> ${agendamento.orientador}<br>` : ''}
-          ${agendamento.finalidade === 'MANUTENÇÃO' ? `<strong>MOTIVO:</strong> ${agendamento.motivo}<br>` : ''}
-          <strong>SOLICITANTE:</strong> ${agendamento.solicitante} - ${agendamento.nomeSolicitante}<br>
-          <strong>SALA:</strong> ${agendamento.sala}<br>
-          <strong>DATA:</strong> ${agendamento.data}<br>
-          <strong>HORA:</strong> ${agendamento.hora}
-        `;
-        div.innerHTML += `
-          <button class="edit-button" data-id="${doc.id}">ALTERAR</button>
-          <button class="delete-button" data-id="${doc.id}">EXCLUIR</button>
-        `;
-        listaAgendamentos.appendChild(div);
-      });
-
-      // Adicionar eventos aos botões de editar e excluir
-      document.querySelectorAll('.edit-button').forEach(button => {
-        button.addEventListener('click', carregarAgendamentoParaEdicao);
-      });
-
-      document.querySelectorAll('.delete-button').forEach(button => {
-        button.addEventListener('click', excluirAgendamento);
-      });
-    }
-
-    // Função para excluir agendamento
-    async function excluirAgendamento(event) {
-      const id = event.target.getAttribute('data-id');
-      const confirmacao = confirm("Tem certeza que deseja excluir este agendamento?");
-      if (confirmacao) {
-        try {
-          await deleteDoc(doc(db, 'agendamentos', id));
-          alert('Agendamento excluído com sucesso!');
-          listarAgendamentos();
-        } catch (error) {
-          console.error('Erro ao excluir agendamento:', error);
-          alert('Erro ao excluir agendamento. Tente novamente.');
-        }
-      }
-    }
-
-    // Função para carregar os dados de um agendamento no formulário para edição
-    function carregarAgendamentoParaEdicao(event) {
-      const id = event.target.getAttribute('data-id');
-      editandoId = id;
-
-      // Carregar dados do agendamento para o formulário
-      const div = event.target.parentElement;
-      finalidadeSelect.value = div.querySelector('strong:nth-child(1)').textContent.split(': ')[1];
-      solicitanteSelect.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[0];
-      nomeSolicitanteInput.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1].split(' - ')[1];
-      document.getElementById('sala').value = div.querySelector('strong:nth-child(3)').textContent.split(': ')[1];
-      document.getElementById('data').value = div.querySelector('strong:nth-child(4)').textContent.split(': ')[1];
-      document.getElementById('hora').value = div.querySelector('strong:nth-child(5)').textContent.split(': ')[1];
-
-      if (finalidadeSelect.value === 'TCC') {
-        tccFields.classList.remove('hidden');
-        temaTcc.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1];
-        bancaTcc.value = div.querySelector('strong:nth-child(3)').textContent.split(': ')[1];
-        orientadorTcc.value = div.querySelector('strong:nth-child(4)').textContent.split(': ')[1];
-      } else if (finalidadeSelect.value === 'MANUTENÇÃO') {
-        manutencaoFields.classList.remove('hidden');
-        motivoManutencao.value = div.querySelector('strong:nth-child(2)').textContent.split(': ')[1];
-      }
-
-      agendarButton.textContent = 'SALVAR ALTERAÇÕES';
-    }
-
-    // Função para lidar com o envio do formulário
-    form.addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      const agendamento = {
-        finalidade: finalidadeSelect.value,
-        solicitante: solicitanteSelect.value,
-        nomeSolicitante: nomeSolicitanteInput.value,
-        sala: document.getElementById('sala').value,
-        data: document.getElementById('data').value,
-        hora: document.getElementById('hora').value,
-        tema: temaTcc.value || '',
-        banca: bancaTcc.value || '',
-        orientador: orientadorTcc.value || '',
-        motivo: motivoManutencao.value || ''
-      };
-
-      // Salvar o agendamento
-      salvarAgendamento(agendamento);
-      form.reset();
-      agendarButton.textContent = 'AGENDAR';
+      // Reseta os campos
       tccFields.classList.add('hidden');
       manutencaoFields.classList.add('hidden');
+      solicitanteFields.classList.add('hidden');
+      nomeSolicitanteField.classList.add('hidden');
+      solicitanteSelect.innerHTML = '';
+
+      // Exibe campos específicos com base na finalidade
+      if (finalidade === 'TCC') {
+        tccFields.classList.remove('hidden');
+        solicitanteFields.classList.remove('hidden');
+        atualizarSolicitante(finalidade); // Campo solicitante vazio para TCC
+      } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
+        solicitanteFields.classList.remove('hidden');
+        atualizarSolicitante(finalidade); // Preencher solicitante com professores e residentes
+      } else if (finalidade === 'MANUTENÇÃO') {
+        manutencaoFields.classList.remove('hidden');
+        solicitanteFields.classList.remove('hidden');
+        atualizarSolicitante(finalidade); // Preencher solicitante com nomes de manutenção
+      } else if (finalidade === 'REUNIÃO') {
+        nomeSolicitanteField.classList.remove('hidden'); // Exibir campo de texto para reunião
+      }
     });
 
-    // Função para exibir o planner mensal
-    verMesBtn.addEventListener('click', () => {
-      plannerBody.innerHTML = ''; // Limpar o planner antes de exibir
+    // Formulário de submissão
+    document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      
+      const finalidade = finalidadeSelect.value;
+      const solicitante = solicitanteSelect.value;
+      const nomeSolicitante = nomeSolicitanteInput ? nomeSolicitanteInput.value : '';
+      const sala = document.getElementById('sala').value;
+      const data = document.getElementById('data').value;
+      const hora = document.getElementById('hora').value;
 
-      // Filtrar os agendamentos do mês
-      const agendamentosDoMes = agendamentos.filter(agendamento => isThisMonth(agendamento.data));
+      const agendamento = {
+        finalidade,
+        solicitante,
+        nomeSolicitante,
+        sala,
+        data,
+        hora,
+      };
 
-      agendamentosDoMes.forEach(agendamento => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${agendamento.data}</td>
-          <td>${agendamento.finalidade} - ${agendamento.sala} - ${agendamento.hora}<br>${agendamento.solicitante} - ${agendamento.nomeSolicitante}</td>
-        `;
-        plannerBody.appendChild(row);
-      });
+      // Adiciona campos adicionais se for TCC
+      if (finalidade === 'TCC') {
+        agendamento.temaTcc = document.getElementById('temaTcc').value;
+        agendamento.bancaTcc = document.getElementById('bancaTcc').value;
+        agendamento.orientadorTcc = document.getElementById('orientadorTcc').value;
+      }
 
-      planner.classList.remove('hidden');
-      form.classList.add('hidden');
-      listaAgendamentos.classList.add('hidden');
-      verMesBtn.classList.add('hidden');
+      // Adiciona campo adicional se for Manutenção
+      if (finalidade === 'MANUTENÇÃO') {
+        agendamento.motivoManutencao = document.getElementById('motivoManutencao').value;
+      }
+
+      try {
+        // Salva o agendamento no Firestore
+        await addDoc(collection(db, 'agendamentos'), agendamento);
+        alert('Agendamento realizado com sucesso!');
+        document.getElementById('agendamentoForm').reset();
+      } catch (error) {
+        console.error('Erro ao salvar o agendamento:', error);
+        alert('Erro ao salvar o agendamento, tente novamente.');
+      }
     });
-
-    // Função para verificar se a data está no mês atual
-    function isThisMonth(agendamentoData) {
-      const now = new Date();
-      const dataAgendamento = new Date(agendamentoData);
-      return dataAgendamento.getMonth() === now.getMonth() && dataAgendamento.getFullYear() === now.getFullYear();
-    }
-
-    // Função para voltar do planner mensal
-    voltarBtn.addEventListener('click', () => {
-      planner.classList.add('hidden');
-      form.classList.remove('hidden');
-      listaAgendamentos.classList.remove('hidden');
-      verMesBtn.classList.remove('hidden');
-    });
-
-    // Carregar agendamentos ao carregar a página
-    window.onload = listarAgendamentos;
   </script>
 
 </body>
