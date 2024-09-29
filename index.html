@@ -68,22 +68,22 @@
       background-color: #c82333;
     }
     .agendamento-visualizacao {
-      margin-top: 30px;
-      padding: 20px;
+      margin-top: 20px;
+      padding: 10px; /* Ajustado para ser mais compacto */
       background-color: #e9ecef;
       border-radius: 5px;
       display: none; /* Inicialmente escondido */
     }
     .agendamento-item {
-      margin-bottom: 10px;
+      margin-bottom: 5px; /* Ajustado para reduzir o espaçamento */
     }
     .agendamento-item strong {
       color: #333;
     }
     /* Estilo para a lista de agendamentos futuros */
     #listaAgendamentos {
-      margin-top: 30px;
-      padding: 20px;
+      margin-top: 25px; /* Ajustado para ser mais compacto */
+      padding: 15px; /* Ajustado para ser mais compacto */
       background-color: #f9f9f9;
       border-radius: 5px;
     }
@@ -104,7 +104,6 @@
   <div class="container">
     <h1>AGENDAMENTO DE SALAS</h1>
     <form id="agendamentoForm">
-      <!-- Formulário de agendamento (mesmo que antes) -->
       <label for="finalidade">FINALIDADE:</label>
       <select id="finalidade" required>
         <option value="">SELECIONE A FINALIDADE</option>
@@ -126,6 +125,10 @@
         <label for="orientadorTcc">ORIENTADOR:</label>
         <select id="orientadorTcc">
           <option value="">SELECIONE O ORIENTADOR</option>
+          <!-- Nomes de professores pré-definidos -->
+          <option value="Professor A">Professor A</option>
+          <option value="Professor B">Professor B</option>
+          <option value="Professor C">Professor C</option>
         </select>
       </div>
 
@@ -219,6 +222,14 @@
       const data = document.getElementById('data').value;
       const hora = document.getElementById('hora').value;
 
+      const hoje = new Date().toISOString().split('T')[0]; // Data de hoje
+
+      // Verificar se a data é passada
+      if (data < hoje) {
+        alert('Não é permitido agendar datas passadas.');
+        return;
+      }
+
       const agendamento = {
         finalidade,
         solicitante,
@@ -264,12 +275,8 @@
         const agendamento = doc.data();
         const agendamentoData = agendamento.data;
 
-        // Verificar se a data do agendamento é passada
-        if (agendamentoData < hoje) {
-          // Excluir agendamento se for de uma data passada
-          await deleteDoc(doc.ref);
-        } else {
-          // Exibir agendamento futuro
+        // Exibir apenas agendamentos futuros
+        if (agendamentoData >= hoje) {
           const agendamentoItem = document.createElement('div');
           agendamentoItem.classList.add('agendamento-lista-item');
           agendamentoItem.innerHTML = `
