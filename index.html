@@ -301,6 +301,7 @@
 
         atualizarSolicitante(agendamento.finalidade);
         alert('Agendamento carregado para edição.');
+        actionButtons.classList.remove('hidden'); // Mostrar botões de ação ao carregar agendamento
       } else {
         alert('Nenhum agendamento encontrado para edição.');
       }
@@ -317,7 +318,7 @@
         await deleteDoc(doc(db, "agendamentos", agendamentoId));
         alert('Agendamento excluído com sucesso!');
         document.getElementById('agendamentoForm').reset();
-        actionButtons.classList.add('hidden'); // Esconder os botões de ação
+        actionButtons.classList.add('hidden'); // Esconder os botões de ação após exclusão
         agendamentoId = null; // Resetar ID após exclusão
       } catch (error) {
         console.error('Erro ao excluir o agendamento:', error);
