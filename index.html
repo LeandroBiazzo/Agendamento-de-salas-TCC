@@ -80,6 +80,23 @@
     .agendamento-item strong {
       color: #333;
     }
+    /* Estilo para a lista de agendamentos futuros */
+    #listaAgendamentos {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+    #listaAgendamentos h3 {
+      color: #333;
+    }
+    .agendamento-lista-item {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .agendamento-lista-item:last-child {
+      border-bottom: none;
+    }
   </style>
 </head>
 <body>
@@ -87,7 +104,7 @@
   <div class="container">
     <h1>AGENDAMENTO DE SALAS</h1>
     <form id="agendamentoForm">
-      
+      <!-- Formulário de agendamento (mesmo que antes) -->
       <label for="finalidade">FINALIDADE:</label>
       <select id="finalidade" required>
         <option value="">SELECIONE A FINALIDADE</option>
@@ -160,11 +177,18 @@
       <div class="agendamento-item"><strong>Data:</strong> <span id="visualizacaoData"></span></div>
       <div class="agendamento-item"><strong>Hora:</strong> <span id="visualizacaoHora"></span></div>
     </div>
+
+    <!-- Seção de visualização dos próximos agendamentos -->
+    <div id="listaAgendamentos">
+      <h3>Próximos Agendamentos</h3>
+      <div id="agendamentosFuturos"></div>
+    </div>
+
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBw3KtxT-386kduvlDLyCHWYsdc_Ny3j9Y",
@@ -181,87 +205,16 @@
     let agendamentoId = null; // ID do agendamento selecionado
 
     const actionButtons = document.getElementById('actionButtons'); // Div com os botões de ação
-    const finalidadeSelect = document.getElementById('finalidade');
-    const tccFields = document.getElementById('tccFields');
-    const manutencaoFields = document.getElementById('manutencaoFields');
-    const solicitanteFields = document.getElementById('solicitanteFields');
-    const nomeSolicitanteField = document.getElementById('nomeSolicitanteField');
-    const solicitanteSelect = document.getElementById('solicitante');
-    const nomeSolicitanteInput = document.getElementById('nomeSolicitante');
-
-    // Elementos da visualização do agendamento
+    const agendamentosFuturos = document.getElementById('agendamentosFuturos'); // Div para a lista de agendamentos futuros
     const agendamentoVisualizacao = document.getElementById('agendamentoVisualizacao');
-    const visualizacaoFinalidade = document.getElementById('visualizacaoFinalidade');
-    const visualizacaoSolicitante = document.getElementById('visualizacaoSolicitante');
-    const visualizacaoNomeSolicitanteContainer = document.getElementById('visualizacaoNomeSolicitanteContainer');
-    const visualizacaoNomeSolicitante = document.getElementById('visualizacaoNomeSolicitante');
-    const visualizacaoSala = document.getElementById('visualizacaoSala');
-    const visualizacaoData = document.getElementById('visualizacaoData');
-    const visualizacaoHora = document.getElementById('visualizacaoHora');
-
-    // Listas de solicitantes
-    const professores = ['Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito'];
-    const residentes = ['R1 CLIN. PEQ', 'R2 CLIN. PEQ', 'R1 ANEST', 'R2 ANEST', 'R1 IMAGEM', 'R2 IMAGEM', 'R1 CLIN. GRANDES', 'R2 CLIN. GRANDES'];
-    const manutencaoNomes = ['Leandro Biazzo', 'Ellen Gorne'];
-
-    // Função para atualizar as opções de solicitante
-    function atualizarSolicitante(finalidade) {
-      solicitanteSelect.innerHTML = ''; 
-      const defaultOption = document.createElement('option');
-      defaultOption.value = '';
-      defaultOption.textContent = 'SELECIONE O SOLICITANTE';
-      solicitanteSelect.appendChild(defaultOption);
-
-      if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
-        professores.concat(residentes).forEach(nome => {
-          const option = document.createElement('option');
-          option.value = nome;
-          option.textContent = nome;
-          solicitanteSelect.appendChild(option);
-        });
-      } else if (finalidade === 'TCC') {
-        solicitanteSelect.innerHTML = '<option value=""> </option>'; 
-      } else if (finalidade === 'MANUTENÇÃO') {
-        manutencaoNomes.forEach(nome => {
-          const option = document.createElement('option');
-          option.value = nome;
-          option.textContent = nome;
-          solicitanteSelect.appendChild(option);
-        });
-      }
-    }
-
-    // Manipula a mudança de finalidade
-    finalidadeSelect.addEventListener('change', function () {
-      const finalidade = finalidadeSelect.value;
-      tccFields.classList.add('hidden');
-      manutencaoFields.classList.add('hidden');
-      solicitanteFields.classList.add('hidden');
-      nomeSolicitanteField.classList.add('hidden');
-
-      if (finalidade === 'TCC') {
-        tccFields.classList.remove('hidden');
-        solicitanteFields.classList.remove('hidden');
-        atualizarSolicitante(finalidade); 
-      } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
-        solicitanteFields.classList.remove('hidden');
-        atualizarSolicitante(finalidade); 
-      } else if (finalidade === 'MANUTENÇÃO') {
-        manutencaoFields.classList.remove('hidden');
-        solicitanteFields.classList.remove('hidden');
-        atualizarSolicitante(finalidade); 
-      } else if (finalidade === 'REUNIÃO') {
-        nomeSolicitanteField.classList.remove('hidden');
-      }
-    });
 
     // Função para salvar ou atualizar agendamento
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
 
-      const finalidade = finalidadeSelect.value;
-      const solicitante = solicitanteSelect.value;
-      const nomeSolicitante = nomeSolicitanteInput ? nomeSolicitanteInput.value : '';
+      const finalidade = document.getElementById('finalidade').value;
+      const solicitante = document.getElementById('solicitante').value;
+      const nomeSolicitante = document.getElementById('nomeSolicitante').value;
       const sala = document.getElementById('sala').value;
       const data = document.getElementById('data').value;
       const hora = document.getElementById('hora').value;
@@ -274,16 +227,6 @@
         data,
         hora,
       };
-
-      if (finalidade === 'TCC') {
-        agendamento.temaTcc = document.getElementById('temaTcc').value;
-        agendamento.bancaTcc = document.getElementById('bancaTcc').value;
-        agendamento.orientadorTcc = document.getElementById('orientadorTcc').value;
-      }
-
-      if (finalidade === 'MANUTENÇÃO') {
-        agendamento.motivoManutencao = document.getElementById('motivoManutencao').value;
-      }
 
       try {
         if (agendamentoId) {
@@ -300,97 +243,63 @@
         // Atualizar a visualização do agendamento
         atualizarVisualizacao(agendamento);
 
+        // Recarregar a lista de agendamentos futuros
+        carregarAgendamentosFuturos();
+
       } catch (error) {
         console.error('Erro ao salvar o agendamento:', error);
         alert('Erro ao salvar o agendamento, tente novamente.');
       }
     });
 
-    // Função para carregar um agendamento para edição
-    document.getElementById('editarButton').addEventListener('click', async function () {
-      if (!agendamentoId) {
-        alert('Nenhum agendamento selecionado para edição.');
-        return;
-      }
+    // Função para carregar agendamentos futuros
+    async function carregarAgendamentosFuturos() {
+      const agendamentosRef = collection(db, "agendamentos");
+      const agendamentosSnapshot = await getDocs(agendamentosRef);
+      const hoje = new Date().toISOString().split('T')[0]; // Data de hoje
 
-      const agendamentoRef = doc(db, "agendamentos", agendamentoId);
-      const agendamentoSnap = await getDoc(agendamentoRef);
+      agendamentosFuturos.innerHTML = ''; // Limpar a lista antes de popular
 
-      if (agendamentoSnap.exists()) {
-        const agendamento = agendamentoSnap.data();
-        finalidadeSelect.value = agendamento.finalidade;
-        solicitanteSelect.value = agendamento.solicitante;
-        nomeSolicitanteInput.value = agendamento.nomeSolicitante || '';
-        document.getElementById('sala').value = agendamento.sala;
-        document.getElementById('data').value = agendamento.data;
-        document.getElementById('hora').value = agendamento.hora;
+      agendamentosSnapshot.forEach(async (doc) => {
+        const agendamento = doc.data();
+        const agendamentoData = agendamento.data;
 
-        if (agendamento.finalidade === 'TCC') {
-          document.getElementById('temaTcc').value = agendamento.temaTcc;
-          document.getElementById('bancaTcc').value = agendamento.bancaTcc;
-          document.getElementById('orientadorTcc').value = agendamento.orientadorTcc;
-          tccFields.classList.remove('hidden');
+        // Verificar se a data do agendamento é passada
+        if (agendamentoData < hoje) {
+          // Excluir agendamento se for de uma data passada
+          await deleteDoc(doc.ref);
+        } else {
+          // Exibir agendamento futuro
+          const agendamentoItem = document.createElement('div');
+          agendamentoItem.classList.add('agendamento-lista-item');
+          agendamentoItem.innerHTML = `
+            <strong>Finalidade:</strong> ${agendamento.finalidade} <br>
+            <strong>Solicitante:</strong> ${agendamento.solicitante || agendamento.nomeSolicitante || ''} <br>
+            <strong>Sala:</strong> ${agendamento.sala} <br>
+            <strong>Data:</strong> ${agendamento.data} <br>
+            <strong>Hora:</strong> ${agendamento.hora}
+          `;
+          agendamentosFuturos.appendChild(agendamentoItem);
         }
+      });
+    }
 
-        if (agendamento.finalidade === 'MANUTENÇÃO') {
-          document.getElementById('motivoManutencao').value = agendamento.motivoManutencao;
-          manutencaoFields.classList.remove('hidden');
-        }
-
-        atualizarSolicitante(agendamento.finalidade);
-        alert('Agendamento carregado para edição.');
-        actionButtons.classList.remove('hidden'); // Mostrar botões de ação ao carregar agendamento
-
-        // Atualizar a visualização do agendamento
-        atualizarVisualizacao(agendamento);
-
-      } else {
-        alert('Nenhum agendamento encontrado para edição.');
-      }
-    });
-
-    // Função para excluir um agendamento
-    document.getElementById('excluirButton').addEventListener('click', async function () {
-      if (!agendamentoId) {
-        alert('Nenhum agendamento selecionado para exclusão.');
-        return;
-      }
-
-      try {
-        await deleteDoc(doc(db, "agendamentos", agendamentoId));
-        alert('Agendamento excluído com sucesso!');
-        document.getElementById('agendamentoForm').reset();
-        actionButtons.classList.add('hidden'); // Esconder os botões de ação após exclusão
-        agendamentoId = null; // Resetar ID após exclusão
-
-        // Esconder a visualização do agendamento
-        agendamentoVisualizacao.style.display = 'none';
-
-      } catch (error) {
-        console.error('Erro ao excluir o agendamento:', error);
-        alert('Erro ao excluir o agendamento, tente novamente.');
-      }
-    });
+    // Carregar agendamentos ao carregar a página
+    window.addEventListener('load', carregarAgendamentosFuturos);
 
     // Função para atualizar a visualização do agendamento
     function atualizarVisualizacao(agendamento) {
-      visualizacaoFinalidade.textContent = agendamento.finalidade;
-      visualizacaoSolicitante.textContent = agendamento.solicitante || '';
-      visualizacaoNomeSolicitante.textContent = agendamento.nomeSolicitante || '';
-      visualizacaoSala.textContent = agendamento.sala;
-      visualizacaoData.textContent = agendamento.data;
-      visualizacaoHora.textContent = agendamento.hora;
-
-      // Mostrar ou esconder o campo "Nome do Solicitante" com base na finalidade
-      if (agendamento.finalidade === 'REUNIÃO') {
-        visualizacaoNomeSolicitanteContainer.classList.remove('hidden');
-      } else {
-        visualizacaoNomeSolicitanteContainer.classList.add('hidden');
-      }
+      document.getElementById('visualizacaoFinalidade').textContent = agendamento.finalidade;
+      document.getElementById('visualizacaoSolicitante').textContent = agendamento.solicitante || '';
+      document.getElementById('visualizacaoNomeSolicitante').textContent = agendamento.nomeSolicitante || '';
+      document.getElementById('visualizacaoSala').textContent = agendamento.sala;
+      document.getElementById('visualizacaoData').textContent = agendamento.data;
+      document.getElementById('visualizacaoHora').textContent = agendamento.hora;
 
       // Mostrar a visualização do agendamento
       agendamentoVisualizacao.style.display = 'block';
     }
+
   </script>
 
 </body>
