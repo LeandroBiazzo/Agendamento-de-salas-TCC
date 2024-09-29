@@ -196,14 +196,30 @@
       });
     }
 
-    // Exibe campos específicos ao selecionar "TCC"
+    // Função para ocultar todos os campos dinâmicos
+    function ocultarTodosCampos() {
+      document.getElementById('tccFields').classList.add('hidden');
+      document.getElementById('manutencaoFields').classList.add('hidden');
+      document.getElementById('solicitanteFields').classList.add('hidden');
+      document.getElementById('nomeSolicitanteField').classList.add('hidden');
+    }
+
+    // Exibe campos específicos com base na finalidade selecionada
     document.getElementById('finalidade').addEventListener('change', function () {
       const finalidade = this.value;
+      ocultarTodosCampos(); // Oculta todos os campos antes de exibir o correto
+
+      // Mostrar campos com base na finalidade
       if (finalidade === 'TCC') {
         document.getElementById('tccFields').classList.remove('hidden');
         preencherOrientadores(); // Preenche os orientadores quando "TCC" for selecionado
-      } else {
-        document.getElementById('tccFields').classList.add('hidden');
+      } else if (finalidade === 'MANUTENÇÃO') {
+        document.getElementById('manutencaoFields').classList.remove('hidden');
+      } else if (finalidade === 'REUNIÃO') {
+        document.getElementById('nomeSolicitanteField').classList.remove('hidden');
+        document.getElementById('solicitanteFields').classList.remove('hidden');
+      } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
+        document.getElementById('solicitanteFields').classList.remove('hidden');
       }
     });
 
