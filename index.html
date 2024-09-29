@@ -65,13 +65,15 @@
       background-color: #c82333;
     }
     .agendamento-visualizacao {
-      margin-top: 30px;
-      padding: 20px;
+      margin-top: 20px;
+      padding: 15px;
       background-color: #e9ecef;
       border-radius: 5px;
+      font-size: 14px; /* Reduzindo a fonte para tornar o quadro mais compacto */
+      line-height: 1.4;
     }
     .agendamento-item {
-      margin-bottom: 10px;
+      margin-bottom: 8px; /* Menor margem inferior */
     }
     .agendamento-item strong {
       color: #333;
@@ -172,12 +174,21 @@
     const agendamentosLista = document.getElementById('agendamentosLista');
     let agendamentoId = null;
 
-    // Lista de orientadores
+    // Lista de orientadores e solicitantes
     const orientadores = [
       'Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 
       'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 
       'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 
       'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito'
+    ];
+
+    const solicitantes = [
+      'Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 
+      'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 
+      'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 
+      'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito', 'R1 Clin Peq.', 
+      'R2 Clin Peq.', 'R1 Clin Grandes', 'R2 Clin Grandes', 'R1 Imagem', 
+      'R2 Imagem', 'R1 Anest', 'R2 Anest'
     ];
 
     // Preenche a lista de orientadores no campo ORIENTADOR
@@ -189,6 +200,18 @@
         option.value = orientador;
         option.textContent = orientador;
         orientadorSelect.appendChild(option);
+      });
+    }
+
+    // Preenche a lista de solicitantes no campo SOLICITANTE
+    function preencherSolicitantes() {
+      const solicitanteSelect = document.getElementById('solicitante');
+      solicitanteSelect.innerHTML = '<option value="">SELECIONE O SOLICITANTE</option>'; // Limpa e adiciona o placeholder
+      solicitantes.forEach(solicitante => {
+        const option = document.createElement('option');
+        option.value = solicitante;
+        option.textContent = solicitante;
+        solicitanteSelect.appendChild(option);
       });
     }
 
@@ -216,17 +239,30 @@
         document.getElementById('solicitanteFields').classList.remove('hidden');
       } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
         document.getElementById('solicitanteFields').classList.remove('hidden');
+        preencherSolicitantes(); // Preenche os solicitantes para essas finalidades
       }
     });
 
+    // Verifica se a data de agendamento é anterior à data atual
+    function validarDataAgendamento(data) {
+      const hoje = new Date().toISOString().split('T')[0]; // Data atual no formato yyyy-mm-dd
+      return data >= hoje;
+    }
+
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
+
+      const data = document.getElementById('data').value;
+
+      if (!validarDataAgendamento(data)) {
+        alert('Não é possível agendar para uma data anterior à data atual.');
+        return;
+      }
 
       const finalidade = document.getElementById('finalidade').value;
       const solicitante = document.getElementById('solicitante').value;
       const nomeSolicitante = document.getElementById('nomeSolicitante').value || '';
       const sala = document.getElementById('sala').value;
-      const data = document.getElementById('data').value;
       const hora = document.getElementById('hora').value;
 
       const agendamento = {
