@@ -53,20 +53,10 @@
     .hidden {
       display: none;
     }
-    .action-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-    }
     .agendamento-buttons {
       display: flex;
       justify-content: space-between;
       margin-top: 10px;
-    }
-    .agendamento-buttons button {
-      width: 48%;
-      padding: 5px;
-      font-size: 0.9em;
     }
     .delete-button {
       background-color: #dc3545;
@@ -108,6 +98,7 @@
         <option value="MANUTENÇÃO">MANUTENÇÃO</option>
       </select>
 
+      <!-- Campos adicionais para TCC -->
       <div id="tccFields" class="hidden">
         <label for="temaTcc">TEMA TCC:</label>
         <input type="text" id="temaTcc" placeholder="DIGITE O TEMA DO TCC">
@@ -121,11 +112,13 @@
         </select>
       </div>
 
+      <!-- Campos adicionais para MANUTENÇÃO -->
       <div id="manutencaoFields" class="hidden">
         <label for="motivoManutencao">MOTIVO DA MANUTENÇÃO:</label>
         <input type="text" id="motivoManutencao" placeholder="DIGITE O MOTIVO DA MANUTENÇÃO">
       </div>
 
+      <!-- Campos adicionais para REUNIÃO ou outras finalidades -->
       <div id="solicitanteFields" class="hidden">
         <label for="solicitante">SOLICITANTE:</label>
         <select id="solicitante">
@@ -138,6 +131,7 @@
         <input type="text" id="nomeSolicitante" placeholder="DIGITE O NOME DO SOLICITANTE">
       </div>
 
+      <!-- Campos comuns -->
       <label for="sala">ESCOLHA A SALA:</label>
       <select id="sala" required>
         <option value="Sala 1">SALA 1</option>
@@ -246,14 +240,14 @@
         if (agendamentoId) {
           await updateDoc(doc(db, "agendamentos", agendamentoId), agendamento);
           alert('Agendamento atualizado com sucesso!');
-          document.getElementById(`agendamento-${agendamentoId}`).remove(); // Remove o agendamento antigo da visualização
-          agendamentoId = null; // Limpa o ID do agendamento para uma nova criação
+          document.getElementById(`agendamento-${agendamentoId}`).remove(); 
+          agendamentoId = null;
         } else {
           await addDoc(collection(db, 'agendamentos'), agendamento);
           alert('Agendamento realizado com sucesso!');
         }
         document.getElementById('agendamentoForm').reset();
-        carregarAgendamentos(); // Atualiza a lista de agendamentos
+        carregarAgendamentos(); 
 
       } catch (error) {
         console.error('Erro ao salvar o agendamento:', error);
@@ -262,7 +256,7 @@
     });
 
     async function carregarAgendamentos() {
-      agendamentosLista.innerHTML = ''; // Limpa a lista atual
+      agendamentosLista.innerHTML = ''; 
       const querySnapshot = await getDocs(collection(db, 'agendamentos'));
       querySnapshot.forEach((doc) => {
         const agendamento = doc.data();
@@ -303,7 +297,7 @@
         document.getElementById('sala').value = agendamento.sala;
         document.getElementById('data').value = agendamento.data;
         document.getElementById('hora').value = agendamento.hora;
-        agendamentoId = id; // Armazena o ID do agendamento em edição
+        agendamentoId = id;
       }
     };
 
@@ -315,7 +309,6 @@
       }
     };
 
-    // Carrega os agendamentos ao iniciar
     carregarAgendamentos();
   </script>
 
