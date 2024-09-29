@@ -66,13 +66,12 @@
     }
     .agendamento-visualizacao {
       margin-top: 30px;
-      padding: 15px;
+      padding: 20px;
       background-color: #e9ecef;
       border-radius: 5px;
-      font-size: 0.9em;
     }
     .agendamento-item {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .agendamento-item strong {
       color: #333;
@@ -101,9 +100,6 @@
 
       <!-- Campos adicionais para TCC -->
       <div id="tccFields" class="hidden">
-        <label for="alunoTcc">ALUNO:</label>
-        <input type="text" id="alunoTcc" placeholder="DIGITE O NOME DO ALUNO">
-
         <label for="temaTcc">TEMA TCC:</label>
         <input type="text" id="temaTcc" placeholder="DIGITE O TEMA DO TCC">
 
@@ -145,11 +141,8 @@
       <label for="data">ESCOLHA A DATA:</label>
       <input type="date" id="data" required>
 
-      <label for="horaInicio">HORÁRIO DE INÍCIO:</label>
-      <input type="time" id="horaInicio" required>
-
-      <label for="horaFim">HORÁRIO DE FIM:</label>
-      <input type="time" id="horaFim" required>
+      <label for="hora">ESCOLHA O HORÁRIO:</label>
+      <input type="time" id="hora" required>
 
       <button type="submit" id="agendarButton">AGENDAR</button>
     </form>
@@ -244,7 +237,8 @@
         document.getElementById('solicitanteFields').classList.remove('hidden');
         preencherSolicitantes();
       } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
-        document.getElementById('nomeSolicitanteField').classList.remove('hidden');
+        document.getElementById('solicitanteFields').classList.remove('hidden');
+        document.getElementById('solicitante').innerHTML = '<option value="">Nenhum</option>';
       }
     });
 
@@ -257,22 +251,16 @@
     }
 
     // Função para verificar conflitos de horário
-    async function verificarConflito(sala, data, horaInicio, horaFim) {
-      const q = query(collection(db, 'agendamentos'), where('data', '==', data));
+    async function verificarConflito(sala, data, hora) {
+      const q = query(collection(db, 'agendamentos'), where('data', '==', data), where('hora', '==', hora));
       const querySnapshot = await getDocs(q);
 
-      // Se houver agendamentos no mesmo dia, verificar se há conflito com a sala e o intervalo de horário
+      // Se houver agendamentos no mesmo horário, verificar se há conflito com a sala
       let conflito = false;
       querySnapshot.forEach((doc) => {
         const agendamento = doc.data();
         if (agendamento.sala === sala) {
-          const agendamentoInicio = agendamento.horaInicio;
-          const agendamentoFim = agendamento.horaFim;
-
-          // Verifica se há sobreposição de horários
-          if (!(horaFim <= agendamentoInicio || horaInicio >= agendamentoFim)) {
-            conflito = true;
-          }
+          conflito = true;
         }
       });
 
@@ -283,8 +271,7 @@
       event.preventDefault();
 
       const data = document.getElementById('data').value;
-      const horaInicio = document.getElementById('horaInicio').value;
-      const horaFim = document.getElementById('horaFim').value;
+      const hora = document.getElementById('hora').value;
       const sala = document.getElementById('sala').value;
 
       // Validação para não permitir datas passadas
@@ -293,16 +280,10 @@
         return;
       }
 
-      // Validação para horário de fim ser maior que o horário de início
-      if (horaFim <= horaInicio) {
-        alert('O horário de fim deve ser maior que o horário de início.');
-        return;
-      }
-
       // Verificar conflito de sala no mesmo horário
-      const conflito = await verificarConflito(sala, data, horaInicio, horaFim);
+      const conflito = await verificarConflito(sala, data, hora);
       if (conflito) {
-        alert('Já existe um agendamento para esta sala no horário selecionado. Escolha outro horário ou sala.');
+        alert('Já existe um agendamento para esta sala no mesmo horário. Escolha outro horário ou sala.');
         return;
       }
 
@@ -316,17 +297,8 @@
         nomeSolicitante,
         sala,
         data,
-        horaInicio,
-        horaFim
+        hora,
       };
-
-      // Adicionar campos específicos para TCC
-      if (finalidade === 'TCC') {
-        agendamento.alunoTcc = document.getElementById('alunoTcc').value;
-        agendamento.temaTcc = document.getElementById('temaTcc').value;
-        agendamento.bancaTcc = document.getElementById('bancaTcc').value;
-        agendamento.orientadorTcc = document.getElementById('orientadorTcc').value;
-      }
 
       try {
         if (agendamentoId) {
@@ -365,36 +337,20 @@
       const [ano, mes, dia] = agendamento.data.split('-');
       const dataFormatada = `${dia}/${mes}/${ano}`;
 
-      let conteudoHTML = `
+      novoAgendamento.innerHTML = `
         <h3>Agendamento Reservado</h3>
         <div class="agendamento-item"><strong>Finalidade:</strong> ${agendamento.finalidade}</div>
+        <div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>
+        ${agendamento.finalidade === 'REUNIÃO' ? `<div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>` : ''}
         <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
         <div class="agendamento-item"><strong>Data:</strong> ${dataFormatada}</div>
-        <div class="agendamento-item"><strong>Horário:</strong> ${agendamento.horaInicio} - ${agendamento.horaFim}</div>
-      `;
-
-      // Adicionar campos específicos para TCC
-      if (agendamento.finalidade === 'TCC') {
-        conteudoHTML += `
-          <div class="agendamento-item"><strong>Aluno:</strong> ${agendamento.alunoTcc || ''}</div>
-          <div class="agendamento-item"><strong>Tema TCC:</strong> ${agendamento.temaTcc || ''}</div>
-          <div class="agendamento-item"><strong>Integrantes da Banca:</strong> ${agendamento.bancaTcc || ''}</div>
-          <div class="agendamento-item"><strong>Orientador:</strong> ${agendamento.orientadorTcc || ''}</div>
-        `;
-      } else {
-        conteudoHTML += `
-          <div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>
-        `;
-      }
-
-      conteudoHTML += `
+        <div class="agendamento-item"><strong>Hora:</strong> ${agendamento.hora}</div>
         <div class="agendamento-buttons">
           <button onclick="editarAgendamento('${id}')">EDITAR AGENDAMENTO</button>
           <button onclick="excluirAgendamento('${id}')" class="delete-button">EXCLUIR AGENDAMENTO</button>
         </div>
       `;
 
-      novoAgendamento.innerHTML = conteudoHTML;
       agendamentosLista.appendChild(novoAgendamento);
     }
 
@@ -408,23 +364,8 @@
         document.getElementById('nomeSolicitante').value = agendamento.nomeSolicitante || '';
         document.getElementById('sala').value = agendamento.sala;
         document.getElementById('data').value = agendamento.data;
-        document.getElementById('horaInicio').value = agendamento.horaInicio;
-        document.getElementById('horaFim').value = agendamento.horaFim;
-
-        // Preencher campos específicos para TCC
-        if (agendamento.finalidade === 'TCC') {
-          document.getElementById('alunoTcc').value = agendamento.alunoTcc || '';
-          document.getElementById('temaTcc').value = agendamento.temaTcc || '';
-          document.getElementById('bancaTcc').value = agendamento.bancaTcc || '';
-          document.getElementById('orientadorTcc').value = agendamento.orientadorTcc || '';
-          document.getElementById('tccFields').classList.remove('hidden');
-        }
-
+        document.getElementById('hora').value = agendamento.hora;
         agendamentoId = id;
-        
-        // Disparar o evento 'change' para atualizar os campos visíveis
-        const event = new Event('change');
-        document.getElementById('finalidade').dispatchEvent(event);
       }
     };
 
