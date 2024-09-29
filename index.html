@@ -118,7 +118,7 @@
         <input type="text" id="motivoManutencao" placeholder="DIGITE O MOTIVO DA MANUTENÇÃO">
       </div>
 
-      <!-- Campos adicionais para REUNIÃO ou outras finalidades -->
+      <!-- Campos adicionais para REUNIÃO -->
       <div id="solicitanteFields" class="hidden">
         <label for="solicitante">SOLICITANTE:</label>
         <select id="solicitante">
@@ -235,9 +235,10 @@
       } else if (finalidade === 'REUNIÃO') {
         document.getElementById('nomeSolicitanteField').classList.remove('hidden');
         document.getElementById('solicitanteFields').classList.remove('hidden');
+        preencherSolicitantes();
       } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
         document.getElementById('solicitanteFields').classList.remove('hidden');
-        preencherSolicitantes(); // Preenche os solicitantes para essas finalidades
+        document.getElementById('solicitante').innerHTML = '<option value="">Nenhum</option>';
       }
     });
 
