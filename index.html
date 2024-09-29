@@ -240,8 +240,7 @@
         document.getElementById('solicitanteFields').classList.remove('hidden');
         preencherSolicitantes();
       } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
-        document.getElementById('solicitanteFields').classList.remove('hidden');
-        document.getElementById('solicitante').innerHTML = '<option value="">Nenhum</option>';
+        document.getElementById('nomeSolicitanteField').classList.remove('hidden');
       }
     });
 
@@ -317,6 +316,13 @@
         horaFim
       };
 
+      // Adicionar campos específicos para TCC
+      if (finalidade === 'TCC') {
+        agendamento.temaTcc = document.getElementById('temaTcc').value;
+        agendamento.bancaTcc = document.getElementById('bancaTcc').value;
+        agendamento.orientadorTcc = document.getElementById('orientadorTcc').value;
+      }
+
       try {
         if (agendamentoId) {
           await updateDoc(doc(db, "agendamentos", agendamentoId), agendamento);
@@ -354,20 +360,32 @@
       const [ano, mes, dia] = agendamento.data.split('-');
       const dataFormatada = `${dia}/${mes}/${ano}`;
 
-      novoAgendamento.innerHTML = `
+      let conteudoHTML = `
         <h3>Agendamento Reservado</h3>
         <div class="agendamento-item"><strong>Finalidade:</strong> ${agendamento.finalidade}</div>
-        <div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>
-        ${agendamento.finalidade === 'REUNIÃO' ? `<div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>` : ''}
+        <div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>
         <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
         <div class="agendamento-item"><strong>Data:</strong> ${dataFormatada}</div>
         <div class="agendamento-item"><strong>Horário:</strong> ${agendamento.horaInicio} - ${agendamento.horaFim}</div>
+      `;
+
+      // Adicionar campos específicos para TCC
+      if (agendamento.finalidade === 'TCC') {
+        conteudoHTML += `
+          <div class="agendamento-item"><strong>Tema TCC:</strong> ${agendamento.temaTcc || ''}</div>
+          <div class="agendamento-item"><strong>Integrantes da Banca:</strong> ${agendamento.bancaTcc || ''}</div>
+          <div class="agendamento-item"><strong>Orientador:</strong> ${agendamento.orientadorTcc || ''}</div>
+        `;
+      }
+
+      conteudoHTML += `
         <div class="agendamento-buttons">
           <button onclick="editarAgendamento('${id}')">EDITAR AGENDAMENTO</button>
           <button onclick="excluirAgendamento('${id}')" class="delete-button">EXCLUIR AGENDAMENTO</button>
         </div>
       `;
 
+      novoAgendamento.innerHTML = conteudoHTML;
       agendamentosLista.appendChild(novoAgendamento);
     }
 
@@ -383,7 +401,20 @@
         document.getElementById('data').value = agendamento.data;
         document.getElementById('horaInicio').value = agendamento.horaInicio;
         document.getElementById('horaFim').value = agendamento.horaFim;
+
+        // Preencher campos específicos para TCC
+        if (agendamento.finalidade === 'TCC') {
+          document.getElementById('temaTcc').value = agendamento.temaTcc || '';
+          document.getElementById('bancaTcc').value = agendamento.bancaTcc || '';
+          document.getElementById('orientadorTcc').value = agendamento.orientadorTcc || '';
+          document.getElementById('tccFields').classList.remove('hidden');
+        }
+
         agendamentoId = id;
+        
+        // Disparar o evento 'change' para atualizar os campos visíveis
+        const event = new Event('change');
+        document.getElementById('finalidade').dispatchEvent(event);
       }
     };
 
