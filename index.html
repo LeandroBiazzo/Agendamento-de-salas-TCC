@@ -66,12 +66,13 @@
     }
     .agendamento-visualizacao {
       margin-top: 30px;
-      padding: 20px;
+      padding: 15px;
       background-color: #e9ecef;
       border-radius: 5px;
+      font-size: 0.9em;
     }
     .agendamento-item {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .agendamento-item strong {
       color: #333;
@@ -100,6 +101,9 @@
 
       <!-- Campos adicionais para TCC -->
       <div id="tccFields" class="hidden">
+        <label for="alunoTcc">ALUNO:</label>
+        <input type="text" id="alunoTcc" placeholder="DIGITE O NOME DO ALUNO">
+
         <label for="temaTcc">TEMA TCC:</label>
         <input type="text" id="temaTcc" placeholder="DIGITE O TEMA DO TCC">
 
@@ -318,6 +322,7 @@
 
       // Adicionar campos específicos para TCC
       if (finalidade === 'TCC') {
+        agendamento.alunoTcc = document.getElementById('alunoTcc').value;
         agendamento.temaTcc = document.getElementById('temaTcc').value;
         agendamento.bancaTcc = document.getElementById('bancaTcc').value;
         agendamento.orientadorTcc = document.getElementById('orientadorTcc').value;
@@ -363,7 +368,6 @@
       let conteudoHTML = `
         <h3>Agendamento Reservado</h3>
         <div class="agendamento-item"><strong>Finalidade:</strong> ${agendamento.finalidade}</div>
-        <div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>
         <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
         <div class="agendamento-item"><strong>Data:</strong> ${dataFormatada}</div>
         <div class="agendamento-item"><strong>Horário:</strong> ${agendamento.horaInicio} - ${agendamento.horaFim}</div>
@@ -372,9 +376,14 @@
       // Adicionar campos específicos para TCC
       if (agendamento.finalidade === 'TCC') {
         conteudoHTML += `
+          <div class="agendamento-item"><strong>Aluno:</strong> ${agendamento.alunoTcc || ''}</div>
           <div class="agendamento-item"><strong>Tema TCC:</strong> ${agendamento.temaTcc || ''}</div>
           <div class="agendamento-item"><strong>Integrantes da Banca:</strong> ${agendamento.bancaTcc || ''}</div>
           <div class="agendamento-item"><strong>Orientador:</strong> ${agendamento.orientadorTcc || ''}</div>
+        `;
+      } else {
+        conteudoHTML += `
+          <div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>
         `;
       }
 
@@ -404,6 +413,7 @@
 
         // Preencher campos específicos para TCC
         if (agendamento.finalidade === 'TCC') {
+          document.getElementById('alunoTcc').value = agendamento.alunoTcc || '';
           document.getElementById('temaTcc').value = agendamento.temaTcc || '';
           document.getElementById('bancaTcc').value = agendamento.bancaTcc || '';
           document.getElementById('orientadorTcc').value = agendamento.orientadorTcc || '';
