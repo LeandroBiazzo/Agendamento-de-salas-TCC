@@ -141,8 +141,11 @@
       <label for="data">ESCOLHA A DATA:</label>
       <input type="date" id="data" required>
 
-      <label for="hora">ESCOLHA O HORÁRIO:</label>
-      <input type="time" id="hora" required>
+      <label for="horaInicio">HORÁRIO DE INÍCIO:</label>
+      <input type="time" id="horaInicio" required>
+
+      <label for="horaFim">HORÁRIO DE FIM:</label>
+      <input type="time" id="horaFim" required>
 
       <button type="submit" id="agendarButton">AGENDAR</button>
     </form>
@@ -251,16 +254,22 @@
     }
 
     // Função para verificar conflitos de horário
-    async function verificarConflito(sala, data, hora) {
-      const q = query(collection(db, 'agendamentos'), where('data', '==', data), where('hora', '==', hora));
+    async function verificarConflito(sala, data, horaInicio, horaFim) {
+      const q = query(collection(db, 'agendamentos'), where('data', '==', data));
       const querySnapshot = await getDocs(q);
 
-      // Se houver agendamentos no mesmo horário, verificar se há conflito com a sala
+      // Se houver agendamentos no mesmo dia, verificar se há conflito com a sala e o intervalo de horário
       let conflito = false;
       querySnapshot.forEach((doc) => {
         const agendamento = doc.data();
         if (agendamento.sala === sala) {
-          conflito = true;
+          const agendamentoInicio = agendamento.horaInicio;
+          const agendamentoFim = agendamento.horaFim;
+
+          // Verifica se há sobreposição de horários
+          if (!(horaFim <= agendamentoInicio || horaInicio >= agendamentoFim)) {
+            conflito = true;
+          }
         }
       });
 
@@ -271,7 +280,8 @@
       event.preventDefault();
 
       const data = document.getElementById('data').value;
-      const hora = document.getElementById('hora').value;
+      const horaInicio = document.getElementById('horaInicio').value;
+      const horaFim = document.getElementById('horaFim').value;
       const sala = document.getElementById('sala').value;
 
       // Validação para não permitir datas passadas
@@ -280,10 +290,16 @@
         return;
       }
 
+      // Validação para horário de fim ser maior que o horário de início
+      if (horaFim <= horaInicio) {
+        alert('O horário de fim deve ser maior que o horário de início.');
+        return;
+      }
+
       // Verificar conflito de sala no mesmo horário
-      const conflito = await verificarConflito(sala, data, hora);
+      const conflito = await verificarConflito(sala, data, horaInicio, horaFim);
       if (conflito) {
-        alert('Já existe um agendamento para esta sala no mesmo horário. Escolha outro horário ou sala.');
+        alert('Já existe um agendamento para esta sala no horário selecionado. Escolha outro horário ou sala.');
         return;
       }
 
@@ -297,7 +313,8 @@
         nomeSolicitante,
         sala,
         data,
-        hora,
+        horaInicio,
+        horaFim
       };
 
       try {
@@ -344,7 +361,7 @@
         ${agendamento.finalidade === 'REUNIÃO' ? `<div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>` : ''}
         <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
         <div class="agendamento-item"><strong>Data:</strong> ${dataFormatada}</div>
-        <div class="agendamento-item"><strong>Hora:</strong> ${agendamento.hora}</div>
+        <div class="agendamento-item"><strong>Horário:</strong> ${agendamento.horaInicio} - ${agendamento.horaFim}</div>
         <div class="agendamento-buttons">
           <button onclick="editarAgendamento('${id}')">EDITAR AGENDAMENTO</button>
           <button onclick="excluirAgendamento('${id}')" class="delete-button">EXCLUIR AGENDAMENTO</button>
@@ -364,7 +381,8 @@
         document.getElementById('nomeSolicitante').value = agendamento.nomeSolicitante || '';
         document.getElementById('sala').value = agendamento.sala;
         document.getElementById('data').value = agendamento.data;
-        document.getElementById('hora').value = agendamento.hora;
+        document.getElementById('horaInicio').value = agendamento.horaInicio;
+        document.getElementById('horaFim').value = agendamento.horaFim;
         agendamentoId = id;
       }
     };
