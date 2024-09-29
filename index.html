@@ -176,6 +176,37 @@
     const agendamentosLista = document.getElementById('agendamentosLista');
     let agendamentoId = null;
 
+    // Lista de orientadores
+    const orientadores = [
+      'Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 
+      'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 
+      'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 
+      'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito'
+    ];
+
+    // Preenche a lista de orientadores no campo ORIENTADOR
+    function preencherOrientadores() {
+      const orientadorSelect = document.getElementById('orientadorTcc');
+      orientadorSelect.innerHTML = '<option value="">SELECIONE O ORIENTADOR</option>'; // Limpa e adiciona o placeholder
+      orientadores.forEach(orientador => {
+        const option = document.createElement('option');
+        option.value = orientador;
+        option.textContent = orientador;
+        orientadorSelect.appendChild(option);
+      });
+    }
+
+    // Exibe campos específicos ao selecionar "TCC"
+    document.getElementById('finalidade').addEventListener('change', function () {
+      const finalidade = this.value;
+      if (finalidade === 'TCC') {
+        document.getElementById('tccFields').classList.remove('hidden');
+        preencherOrientadores(); // Preenche os orientadores quando "TCC" for selecionado
+      } else {
+        document.getElementById('tccFields').classList.add('hidden');
+      }
+    });
+
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
 
