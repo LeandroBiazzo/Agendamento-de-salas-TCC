@@ -56,7 +56,7 @@
     .action-buttons {
       display: flex;
       justify-content: space-between;
-      margin-top: 20px; /* Adiciona espaço acima dos botões */
+      margin-top: 20px;
     }
     .action-buttons button {
       width: 48%;
@@ -75,7 +75,6 @@
     <h1>AGENDAMENTO DE SALAS</h1>
     <form id="agendamentoForm">
       
-      <!-- Finalidade -->
       <label for="finalidade">FINALIDADE:</label>
       <select id="finalidade" required>
         <option value="">SELECIONE A FINALIDADE</option>
@@ -87,7 +86,6 @@
         <option value="MANUTENÇÃO">MANUTENÇÃO</option>
       </select>
 
-      <!-- Campos adicionais para TCC -->
       <div id="tccFields" class="hidden">
         <label for="temaTcc">TEMA TCC:</label>
         <input type="text" id="temaTcc" placeholder="DIGITE O TEMA DO TCC">
@@ -98,17 +96,14 @@
         <label for="orientadorTcc">ORIENTADOR:</label>
         <select id="orientadorTcc">
           <option value="">SELECIONE O ORIENTADOR</option>
-          <!-- Lista de orientadores permanece igual -->
         </select>
       </div>
 
-      <!-- Campo adicional para Manutenção -->
       <div id="manutencaoFields" class="hidden">
         <label for="motivoManutencao">MOTIVO DA MANUTENÇÃO:</label>
         <input type="text" id="motivoManutencao" placeholder="DIGITE O MOTIVO DA MANUTENÇÃO">
       </div>
 
-      <!-- Solicitante -->
       <div id="solicitanteFields" class="hidden">
         <label for="solicitante">SOLICITANTE:</label>
         <select id="solicitante">
@@ -116,13 +111,11 @@
         </select>
       </div>
 
-      <!-- Campo de Nome do Solicitante para Reunião -->
       <div id="nomeSolicitanteField" class="hidden">
         <label for="nomeSolicitante">NOME DO SOLICITANTE:</label>
         <input type="text" id="nomeSolicitante" placeholder="DIGITE O NOME DO SOLICITANTE">
       </div>
 
-      <!-- Sala e Data -->
       <label for="sala">ESCOLHA A SALA:</label>
       <select id="sala" required>
         <option value="Sala 1">SALA 1</option>
@@ -137,8 +130,8 @@
 
       <button type="submit" id="agendarButton">AGENDAR</button>
 
-      <!-- Botões de ação para Edição e Exclusão -->
-      <div class="action-buttons">
+      <!-- Botões de ação para Edição e Exclusão inicialmente escondidos -->
+      <div class="action-buttons hidden" id="actionButtons">
         <button type="button" id="editarButton">EDITAR AGENDAMENTO</button>
         <button type="button" id="excluirButton" class="delete-button">EXCLUIR AGENDAMENTO</button>
       </div>
@@ -146,11 +139,9 @@
   </div>
 
   <script type="module">
-    // Importação do Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js";
 
-    // Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBw3KtxT-386kduvlDLyCHWYsdc_Ny3j9Y",
       authDomain: "agendamento-de-sala-c348d.firebaseapp.com",
@@ -160,12 +151,12 @@
       appId: "1:1051108935402:web:d87c0ce75b27a6908f3993"
     };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let agendamentoId = null;
+    let agendamentoId = null; // ID do agendamento selecionado
 
+    const actionButtons = document.getElementById('actionButtons'); // Div com os botões de ação
     const finalidadeSelect = document.getElementById('finalidade');
     const tccFields = document.getElementById('tccFields');
     const manutencaoFields = document.getElementById('manutencaoFields');
@@ -182,7 +173,6 @@
     // Função para atualizar as opções de solicitante
     function atualizarSolicitante(finalidade) {
       solicitanteSelect.innerHTML = ''; 
-
       const defaultOption = document.createElement('option');
       defaultOption.value = '';
       defaultOption.textContent = 'SELECIONE O SOLICITANTE';
@@ -196,7 +186,7 @@
           solicitanteSelect.appendChild(option);
         });
       } else if (finalidade === 'TCC') {
-        solicitanteSelect.innerHTML = '<option value=""> </option>';
+        solicitanteSelect.innerHTML = '<option value=""> </option>'; 
       } else if (finalidade === 'MANUTENÇÃO') {
         manutencaoNomes.forEach(nome => {
           const option = document.createElement('option');
@@ -210,7 +200,6 @@
     // Manipula a mudança de finalidade
     finalidadeSelect.addEventListener('change', function () {
       const finalidade = finalidadeSelect.value;
-
       tccFields.classList.add('hidden');
       manutencaoFields.classList.add('hidden');
       solicitanteFields.classList.add('hidden');
@@ -235,7 +224,7 @@
     // Função para salvar ou atualizar agendamento
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
-      
+
       const finalidade = finalidadeSelect.value;
       const solicitante = solicitanteSelect.value;
       const nomeSolicitante = nomeSolicitanteInput ? nomeSolicitanteInput.value : '';
@@ -264,16 +253,15 @@
 
       try {
         if (agendamentoId) {
-          // Atualizar agendamento existente
           await updateDoc(doc(db, "agendamentos", agendamentoId), agendamento);
           alert('Agendamento atualizado com sucesso!');
         } else {
-          // Criar novo agendamento
-          await addDoc(collection(db, 'agendamentos'), agendamento);
+          const docRef = await addDoc(collection(db, 'agendamentos'), agendamento);
+          agendamentoId = docRef.id; // Armazenar o ID do documento recém-criado
           alert('Agendamento realizado com sucesso!');
+          actionButtons.classList.remove('hidden'); // Mostrar botões de ação
         }
         document.getElementById('agendamentoForm').reset();
-        agendamentoId = null; // Resetar ID após a edição
       } catch (error) {
         console.error('Erro ao salvar o agendamento:', error);
         alert('Erro ao salvar o agendamento, tente novamente.');
@@ -282,6 +270,11 @@
 
     // Função para carregar um agendamento para edição
     document.getElementById('editarButton').addEventListener('click', async function () {
+      if (!agendamentoId) {
+        alert('Nenhum agendamento selecionado para edição.');
+        return;
+      }
+
       const agendamentoRef = doc(db, "agendamentos", agendamentoId);
       const agendamentoSnap = await getDoc(agendamentoRef);
 
@@ -315,18 +308,20 @@
 
     // Função para excluir um agendamento
     document.getElementById('excluirButton').addEventListener('click', async function () {
-      if (agendamentoId) {
-        try {
-          await deleteDoc(doc(db, "agendamentos", agendamentoId));
-          alert('Agendamento excluído com sucesso!');
-          document.getElementById('agendamentoForm').reset();
-          agendamentoId = null; // Resetar ID após exclusão
-        } catch (error) {
-          console.error('Erro ao excluir o agendamento:', error);
-          alert('Erro ao excluir o agendamento, tente novamente.');
-        }
-      } else {
+      if (!agendamentoId) {
         alert('Nenhum agendamento selecionado para exclusão.');
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "agendamentos", agendamentoId));
+        alert('Agendamento excluído com sucesso!');
+        document.getElementById('agendamentoForm').reset();
+        actionButtons.classList.add('hidden'); // Esconder os botões de ação
+        agendamentoId = null; // Resetar ID após exclusão
+      } catch (error) {
+        console.error('Erro ao excluir o agendamento:', error);
+        alert('Erro ao excluir o agendamento, tente novamente.');
       }
     });
   </script>
