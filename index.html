@@ -322,9 +322,22 @@
     async function carregarAgendamentos() {
       agendamentosLista.innerHTML = ''; 
       const querySnapshot = await getDocs(collection(db, 'agendamentos'));
+      const agendamentos = [];
+
       querySnapshot.forEach((doc) => {
         const agendamento = doc.data();
-        adicionarVisualizacao(doc.id, agendamento);
+        agendamentos.push({ id: doc.id, ...agendamento });
+      });
+
+      // Ordena os agendamentos por data e hora
+      agendamentos.sort((a, b) => {
+        const dateA = new Date(`${a.data}T${a.hora}`);
+        const dateB = new Date(`${b.data}T${b.hora}`);
+        return dateA - dateB;
+      });
+
+      agendamentos.forEach(({ id, ...agendamento }) => {
+        adicionarVisualizacao(id, agendamento);
       });
     }
 
