@@ -53,6 +53,19 @@
     .hidden {
       display: none;
     }
+    .action-buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+    .action-buttons button {
+      width: 48%;
+    }
+    .delete-button {
+      background-color: #dc3545;
+    }
+    .delete-button:hover {
+      background-color: #c82333;
+    }
   </style>
 </head>
 <body>
@@ -122,13 +135,19 @@
       <input type="time" id="hora" required>
 
       <button type="submit" id="agendarButton">AGENDAR</button>
+
+      <!-- Botões de ação para Edição e Exclusão -->
+      <div class="action-buttons">
+        <button type="button" id="editarButton">EDITAR AGENDAMENTO</button>
+        <button type="button" id="excluirButton" class="delete-button">EXCLUIR AGENDAMENTO</button>
+      </div>
     </form>
   </div>
 
   <script type="module">
     // Importação do Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js";
 
     // Configuração do Firebase
     const firebaseConfig = {
@@ -143,6 +162,8 @@
     // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    let agendamentoId = null;
 
     const finalidadeSelect = document.getElementById('finalidade');
     const tccFields = document.getElementById('tccFields');
@@ -159,10 +180,8 @@
 
     // Função para atualizar as opções de solicitante
     function atualizarSolicitante(finalidade) {
-      // Limpa as opções existentes
       solicitanteSelect.innerHTML = ''; 
 
-      // Adiciona a opção inicial novamente
       const defaultOption = document.createElement('option');
       defaultOption.value = '';
       defaultOption.textContent = 'SELECIONE O SOLICITANTE';
@@ -176,7 +195,6 @@
           solicitanteSelect.appendChild(option);
         });
       } else if (finalidade === 'TCC') {
-        // Campo solicitante vazio para TCC
         solicitanteSelect.innerHTML = '<option value=""> </option>';
       } else if (finalidade === 'MANUTENÇÃO') {
         manutencaoNomes.forEach(nome => {
@@ -192,30 +210,28 @@
     finalidadeSelect.addEventListener('change', function () {
       const finalidade = finalidadeSelect.value;
 
-      // Reseta os campos
       tccFields.classList.add('hidden');
       manutencaoFields.classList.add('hidden');
       solicitanteFields.classList.add('hidden');
       nomeSolicitanteField.classList.add('hidden');
 
-      // Exibe campos específicos com base na finalidade
       if (finalidade === 'TCC') {
         tccFields.classList.remove('hidden');
         solicitanteFields.classList.remove('hidden');
-        atualizarSolicitante(finalidade); // Campo solicitante vazio para TCC
+        atualizarSolicitante(finalidade); 
       } else if (finalidade === 'AULA' || finalidade === 'PROVA' || finalidade === 'DISCUSSÃO DE CASO') {
         solicitanteFields.classList.remove('hidden');
-        atualizarSolicitante(finalidade); // Preencher solicitante com professores e residentes
+        atualizarSolicitante(finalidade); 
       } else if (finalidade === 'MANUTENÇÃO') {
         manutencaoFields.classList.remove('hidden');
         solicitanteFields.classList.remove('hidden');
-        atualizarSolicitante(finalidade); // Preencher solicitante com nomes de manutenção
+        atualizarSolicitante(finalidade); 
       } else if (finalidade === 'REUNIÃO') {
-        nomeSolicitanteField.classList.remove('hidden'); // Exibir campo de texto para reunião
+        nomeSolicitanteField.classList.remove('hidden');
       }
     });
 
-    // Formulário de submissão
+    // Função para salvar ou atualizar agendamento
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
       
@@ -235,26 +251,81 @@
         hora,
       };
 
-      // Adiciona campos adicionais se for TCC
       if (finalidade === 'TCC') {
         agendamento.temaTcc = document.getElementById('temaTcc').value;
         agendamento.bancaTcc = document.getElementById('bancaTcc').value;
         agendamento.orientadorTcc = document.getElementById('orientadorTcc').value;
       }
 
-      // Adiciona campo adicional se for Manutenção
       if (finalidade === 'MANUTENÇÃO') {
         agendamento.motivoManutencao = document.getElementById('motivoManutencao').value;
       }
 
       try {
-        // Salva o agendamento no Firestore
-        await addDoc(collection(db, 'agendamentos'), agendamento);
-        alert('Agendamento realizado com sucesso!');
+        if (agendamentoId) {
+          // Atualizar agendamento existente
+          await updateDoc(doc(db, "agendamentos", agendamentoId), agendamento);
+          alert('Agendamento atualizado com sucesso!');
+        } else {
+          // Criar novo agendamento
+          await addDoc(collection(db, 'agendamentos'), agendamento);
+          alert('Agendamento realizado com sucesso!');
+        }
         document.getElementById('agendamentoForm').reset();
+        agendamentoId = null; // Resetar ID após a edição
       } catch (error) {
         console.error('Erro ao salvar o agendamento:', error);
         alert('Erro ao salvar o agendamento, tente novamente.');
+      }
+    });
+
+    // Função para carregar um agendamento para edição
+    document.getElementById('editarButton').addEventListener('click', async function () {
+      const agendamentoRef = doc(db, "agendamentos", agendamentoId);
+      const agendamentoSnap = await getDoc(agendamentoRef);
+
+      if (agendamentoSnap.exists()) {
+        const agendamento = agendamentoSnap.data();
+        finalidadeSelect.value = agendamento.finalidade;
+        solicitanteSelect.value = agendamento.solicitante;
+        nomeSolicitanteInput.value = agendamento.nomeSolicitante || '';
+        document.getElementById('sala').value = agendamento.sala;
+        document.getElementById('data').value = agendamento.data;
+        document.getElementById('hora').value = agendamento.hora;
+
+        if (agendamento.finalidade === 'TCC') {
+          document.getElementById('temaTcc').value = agendamento.temaTcc;
+          document.getElementById('bancaTcc').value = agendamento.bancaTcc;
+          document.getElementById('orientadorTcc').value = agendamento.orientadorTcc;
+          tccFields.classList.remove('hidden');
+        }
+
+        if (agendamento.finalidade === 'MANUTENÇÃO') {
+          document.getElementById('motivoManutencao').value = agendamento.motivoManutencao;
+          manutencaoFields.classList.remove('hidden');
+        }
+
+        atualizarSolicitante(agendamento.finalidade);
+        alert('Agendamento carregado para edição.');
+      } else {
+        alert('Nenhum agendamento encontrado para edição.');
+      }
+    });
+
+    // Função para excluir um agendamento
+    document.getElementById('excluirButton').addEventListener('click', async function () {
+      if (agendamentoId) {
+        try {
+          await deleteDoc(doc(db, "agendamentos", agendamentoId));
+          alert('Agendamento excluído com sucesso!');
+          document.getElementById('agendamentoForm').reset();
+          agendamentoId = null; // Resetar ID após exclusão
+        } catch (error) {
+          console.error('Erro ao excluir o agendamento:', error);
+          alert('Erro ao excluir o agendamento, tente novamente.');
+        }
+      } else {
+        alert('Nenhum agendamento selecionado para exclusão.');
       }
     });
   </script>
