@@ -72,15 +72,13 @@
       padding: 20px;
       background-color: #e9ecef;
       border-radius: 5px;
+      display: none; /* Inicialmente escondido */
     }
     .agendamento-item {
       margin-bottom: 10px;
     }
     .agendamento-item strong {
       color: #333;
-    }
-    .agendamentos-lista {
-      margin-top: 30px;
     }
   </style>
 </head>
@@ -145,14 +143,22 @@
 
       <button type="submit" id="agendarButton">AGENDAR</button>
 
+      <!-- Botões de ação para Edição e Exclusão inicialmente escondidos -->
       <div class="action-buttons hidden" id="actionButtons">
         <button type="button" id="editarButton">EDITAR AGENDAMENTO</button>
         <button type="button" id="excluirButton" class="delete-button">EXCLUIR AGENDAMENTO</button>
       </div>
     </form>
 
-    <div class="agendamentos-lista" id="agendamentosLista">
-      <!-- Agendamentos aparecerão aqui -->
+    <!-- Seção de visualização do agendamento reservado -->
+    <div id="agendamentoVisualizacao" class="agendamento-visualizacao">
+      <h3>Agendamento Reservado</h3>
+      <div class="agendamento-item"><strong>Finalidade:</strong> <span id="visualizacaoFinalidade"></span></div>
+      <div class="agendamento-item"><strong>Solicitante:</strong> <span id="visualizacaoSolicitante"></span></div>
+      <div class="agendamento-item hidden" id="visualizacaoNomeSolicitanteContainer"><strong>Nome do Solicitante:</strong> <span id="visualizacaoNomeSolicitante"></span></div>
+      <div class="agendamento-item"><strong>Sala:</strong> <span id="visualizacaoSala"></span></div>
+      <div class="agendamento-item"><strong>Data:</strong> <span id="visualizacaoData"></span></div>
+      <div class="agendamento-item"><strong>Hora:</strong> <span id="visualizacaoHora"></span></div>
     </div>
   </div>
 
@@ -172,11 +178,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const agendamentosLista = document.getElementById('agendamentosLista');
+    let agendamentoId = null; // ID do agendamento selecionado
 
-    let agendamentoId = null;
-
-    const actionButtons = document.getElementById('actionButtons');
+    const actionButtons = document.getElementById('actionButtons'); // Div com os botões de ação
     const finalidadeSelect = document.getElementById('finalidade');
     const tccFields = document.getElementById('tccFields');
     const manutencaoFields = document.getElementById('manutencaoFields');
@@ -185,10 +189,22 @@
     const solicitanteSelect = document.getElementById('solicitante');
     const nomeSolicitanteInput = document.getElementById('nomeSolicitante');
 
+    // Elementos da visualização do agendamento
+    const agendamentoVisualizacao = document.getElementById('agendamentoVisualizacao');
+    const visualizacaoFinalidade = document.getElementById('visualizacaoFinalidade');
+    const visualizacaoSolicitante = document.getElementById('visualizacaoSolicitante');
+    const visualizacaoNomeSolicitanteContainer = document.getElementById('visualizacaoNomeSolicitanteContainer');
+    const visualizacaoNomeSolicitante = document.getElementById('visualizacaoNomeSolicitante');
+    const visualizacaoSala = document.getElementById('visualizacaoSala');
+    const visualizacaoData = document.getElementById('visualizacaoData');
+    const visualizacaoHora = document.getElementById('visualizacaoHora');
+
+    // Listas de solicitantes
     const professores = ['Bruna Marcele', 'Danielle Bacarelli', 'Diana Costa', 'Douglas Caragelasco', 'João Flávio', 'Lívia Biazzo', 'Mariana Miranda', 'Marilia Filiponi', 'Marta Luppi', 'Michele Barros', 'Paula Guimarães', 'Paulo Griska', 'Paulo Anselmo', 'Rafael Neves', 'Raphaela Brito'];
     const residentes = ['R1 CLIN. PEQ', 'R2 CLIN. PEQ', 'R1 ANEST', 'R2 ANEST', 'R1 IMAGEM', 'R2 IMAGEM', 'R1 CLIN. GRANDES', 'R2 CLIN. GRANDES'];
     const manutencaoNomes = ['Leandro Biazzo', 'Ellen Gorne'];
 
+    // Função para atualizar as opções de solicitante
     function atualizarSolicitante(finalidade) {
       solicitanteSelect.innerHTML = ''; 
       const defaultOption = document.createElement('option');
@@ -215,6 +231,7 @@
       }
     }
 
+    // Manipula a mudança de finalidade
     finalidadeSelect.addEventListener('change', function () {
       const finalidade = finalidadeSelect.value;
       tccFields.classList.add('hidden');
@@ -238,6 +255,7 @@
       }
     });
 
+    // Função para salvar ou atualizar agendamento
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
 
@@ -273,13 +291,14 @@
           alert('Agendamento atualizado com sucesso!');
         } else {
           const docRef = await addDoc(collection(db, 'agendamentos'), agendamento);
-          agendamentoId = docRef.id;
+          agendamentoId = docRef.id; // Armazenar o ID do documento recém-criado
           alert('Agendamento realizado com sucesso!');
-          actionButtons.classList.remove('hidden');
+          actionButtons.classList.remove('hidden'); // Mostrar botões de ação
         }
         document.getElementById('agendamentoForm').reset();
 
-        adicionarVisualizacao(agendamento);
+        // Atualizar a visualização do agendamento
+        atualizarVisualizacao(agendamento);
 
       } catch (error) {
         console.error('Erro ao salvar o agendamento:', error);
@@ -287,21 +306,90 @@
       }
     });
 
-    function adicionarVisualizacao(agendamento) {
-      const novoAgendamento = document.createElement('div');
-      novoAgendamento.classList.add('agendamento-visualizacao');
+    // Função para carregar um agendamento para edição
+    document.getElementById('editarButton').addEventListener('click', async function () {
+      if (!agendamentoId) {
+        alert('Nenhum agendamento selecionado para edição.');
+        return;
+      }
 
-      novoAgendamento.innerHTML = `
-        <h3>Agendamento Reservado</h3>
-        <div class="agendamento-item"><strong>Finalidade:</strong> ${agendamento.finalidade}</div>
-        <div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>
-        ${agendamento.finalidade === 'REUNIÃO' ? `<div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>` : ''}
-        <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
-        <div class="agendamento-item"><strong>Data:</strong> ${agendamento.data}</div>
-        <div class="agendamento-item"><strong>Hora:</strong> ${agendamento.hora}</div>
-      `;
+      const agendamentoRef = doc(db, "agendamentos", agendamentoId);
+      const agendamentoSnap = await getDoc(agendamentoRef);
 
-      agendamentosLista.appendChild(novoAgendamento);
+      if (agendamentoSnap.exists()) {
+        const agendamento = agendamentoSnap.data();
+        finalidadeSelect.value = agendamento.finalidade;
+        solicitanteSelect.value = agendamento.solicitante;
+        nomeSolicitanteInput.value = agendamento.nomeSolicitante || '';
+        document.getElementById('sala').value = agendamento.sala;
+        document.getElementById('data').value = agendamento.data;
+        document.getElementById('hora').value = agendamento.hora;
+
+        if (agendamento.finalidade === 'TCC') {
+          document.getElementById('temaTcc').value = agendamento.temaTcc;
+          document.getElementById('bancaTcc').value = agendamento.bancaTcc;
+          document.getElementById('orientadorTcc').value = agendamento.orientadorTcc;
+          tccFields.classList.remove('hidden');
+        }
+
+        if (agendamento.finalidade === 'MANUTENÇÃO') {
+          document.getElementById('motivoManutencao').value = agendamento.motivoManutencao;
+          manutencaoFields.classList.remove('hidden');
+        }
+
+        atualizarSolicitante(agendamento.finalidade);
+        alert('Agendamento carregado para edição.');
+        actionButtons.classList.remove('hidden'); // Mostrar botões de ação ao carregar agendamento
+
+        // Atualizar a visualização do agendamento
+        atualizarVisualizacao(agendamento);
+
+      } else {
+        alert('Nenhum agendamento encontrado para edição.');
+      }
+    });
+
+    // Função para excluir um agendamento
+    document.getElementById('excluirButton').addEventListener('click', async function () {
+      if (!agendamentoId) {
+        alert('Nenhum agendamento selecionado para exclusão.');
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "agendamentos", agendamentoId));
+        alert('Agendamento excluído com sucesso!');
+        document.getElementById('agendamentoForm').reset();
+        actionButtons.classList.add('hidden'); // Esconder os botões de ação após exclusão
+        agendamentoId = null; // Resetar ID após exclusão
+
+        // Esconder a visualização do agendamento
+        agendamentoVisualizacao.style.display = 'none';
+
+      } catch (error) {
+        console.error('Erro ao excluir o agendamento:', error);
+        alert('Erro ao excluir o agendamento, tente novamente.');
+      }
+    });
+
+    // Função para atualizar a visualização do agendamento
+    function atualizarVisualizacao(agendamento) {
+      visualizacaoFinalidade.textContent = agendamento.finalidade;
+      visualizacaoSolicitante.textContent = agendamento.solicitante || '';
+      visualizacaoNomeSolicitante.textContent = agendamento.nomeSolicitante || '';
+      visualizacaoSala.textContent = agendamento.sala;
+      visualizacaoData.textContent = agendamento.data;
+      visualizacaoHora.textContent = agendamento.hora;
+
+      // Mostrar ou esconder o campo "Nome do Solicitante" com base na finalidade
+      if (agendamento.finalidade === 'REUNIÃO') {
+        visualizacaoNomeSolicitanteContainer.classList.remove('hidden');
+      } else {
+        visualizacaoNomeSolicitanteContainer.classList.add('hidden');
+      }
+
+      // Mostrar a visualização do agendamento
+      agendamentoVisualizacao.style.display = 'block';
     }
   </script>
 
