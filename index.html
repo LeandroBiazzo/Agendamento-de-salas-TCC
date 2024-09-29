@@ -154,7 +154,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
 
     // Firebase configuration
     const firebaseConfig = {
@@ -249,10 +249,29 @@
       return dataSelecionada >= dataAtual;
     }
 
+    // Função para verificar conflitos de horário
+    async function verificarConflito(sala, data, hora) {
+      const q = query(collection(db, 'agendamentos'), where('data', '==', data), where('hora', '==', hora));
+      const querySnapshot = await getDocs(q);
+
+      // Se houver agendamentos no mesmo horário, verificar se há conflito com a sala
+      let conflito = false;
+      querySnapshot.forEach((doc) => {
+        const agendamento = doc.data();
+        if (agendamento.sala === sala) {
+          conflito = true;
+        }
+      });
+
+      return conflito;
+    }
+
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
       event.preventDefault();
 
       const data = document.getElementById('data').value;
+      const hora = document.getElementById('hora').value;
+      const sala = document.getElementById('sala').value;
 
       // Validação para não permitir datas passadas
       if (!validarData(data)) {
@@ -260,11 +279,16 @@
         return;
       }
 
+      // Verificar conflito de sala no mesmo horário
+      const conflito = await verificarConflito(sala, data, hora);
+      if (conflito) {
+        alert('Já existe um agendamento para esta sala no mesmo horário. Escolha outro horário ou sala.');
+        return;
+      }
+
       const finalidade = document.getElementById('finalidade').value;
       const solicitante = document.getElementById('solicitante').value;
       const nomeSolicitante = document.getElementById('nomeSolicitante').value || '';
-      const sala = document.getElementById('sala').value;
-      const hora = document.getElementById('hora').value;
 
       const agendamento = {
         finalidade,
@@ -308,13 +332,17 @@
       novoAgendamento.classList.add('agendamento-visualizacao');
       novoAgendamento.id = `agendamento-${id}`;
 
+      // Formatar a data no formato dd/mm/aa
+      const [ano, mes, dia] = agendamento.data.split('-');
+      const dataFormatada = `${dia}/${mes}/${ano}`;
+
       novoAgendamento.innerHTML = `
         <h3>Agendamento Reservado</h3>
         <div class="agendamento-item"><strong>Finalidade:</strong> ${agendamento.finalidade}</div>
         <div class="agendamento-item"><strong>Solicitante:</strong> ${agendamento.solicitante || ''}</div>
         ${agendamento.finalidade === 'REUNIÃO' ? `<div class="agendamento-item"><strong>Nome do Solicitante:</strong> ${agendamento.nomeSolicitante || ''}</div>` : ''}
         <div class="agendamento-item"><strong>Sala:</strong> ${agendamento.sala}</div>
-        <div class="agendamento-item"><strong>Data:</strong> ${agendamento.data}</div>
+        <div class="agendamento-item"><strong>Data:</strong> ${dataFormatada}</div>
         <div class="agendamento-item"><strong>Hora:</strong> ${agendamento.hora}</div>
         <div class="agendamento-buttons">
           <button onclick="editarAgendamento('${id}')">EDITAR AGENDAMENTO</button>
