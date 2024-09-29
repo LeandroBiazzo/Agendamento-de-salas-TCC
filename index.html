@@ -65,15 +65,13 @@
       background-color: #c82333;
     }
     .agendamento-visualizacao {
-      margin-top: 20px;
-      padding: 15px;
+      margin-top: 30px;
+      padding: 20px;
       background-color: #e9ecef;
       border-radius: 5px;
-      font-size: 14px; /* Reduzindo a fonte para tornar o quadro mais compacto */
-      line-height: 1.4;
     }
     .agendamento-item {
-      margin-bottom: 8px; /* Menor margem inferior */
+      margin-bottom: 10px;
     }
     .agendamento-item strong {
       color: #333;
@@ -243,10 +241,12 @@
       }
     });
 
-    // Verifica se a data de agendamento é anterior à data atual
-    function validarDataAgendamento(data) {
-      const hoje = new Date().toISOString().split('T')[0]; // Data atual no formato yyyy-mm-dd
-      return data >= hoje;
+    // Função para validar se a data escolhida é hoje ou futura
+    function validarData(data) {
+      const dataSelecionada = new Date(data);
+      const dataAtual = new Date();
+      dataAtual.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas as datas
+      return dataSelecionada >= dataAtual;
     }
 
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
@@ -254,8 +254,9 @@
 
       const data = document.getElementById('data').value;
 
-      if (!validarDataAgendamento(data)) {
-        alert('Não é possível agendar para uma data anterior à data atual.');
+      // Validação para não permitir datas passadas
+      if (!validarData(data)) {
+        alert('Você não pode agendar uma data passada. Escolha a data de hoje ou uma data futura.');
         return;
       }
 
