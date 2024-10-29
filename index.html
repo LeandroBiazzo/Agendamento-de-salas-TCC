@@ -157,22 +157,12 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyBw3KtxT-386kduvlDLyCHWYsdc_Ny3j9Y",
-      authDomain: "agendamento-de-sala-c348d.firebaseapp.com",
-      projectId: "agendamento-de-sala-c348d",
-      storageBucket: "agendamento-de-sala-c348d.appspot.com",
-      messagingSenderId: "1051108935402",
-      appId: "1:1051108935402:web:d87c0ce75b27a6908f3993"
-    };
+    const supabaseUrl = 'https://yunubfhwztkzdklluurv.supabase.co';
+    const supabaseKey = 'YOUR_SUPABASE_ANON_PUBLIC_KEY'; // Substitua com sua chave anônima do Supabase
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     const agendamentosLista = document.getElementById('agendamentosLista');
     let agendamentoId = null;
 
@@ -235,18 +225,36 @@
       return dataSelecionada >= dataAtual;
     }
 
+    // Função auxiliar para converter horário para minutos desde meia-noite
+    function converterParaMinutos(hora) {
+      const [h, m] = hora.split(':');
+      return parseInt(h) * 60 + parseInt(m);
+    }
+
     // Função para verificar conflitos de horário
     async function verificarConflito(sala, data, horaInicio, horaFim) {
-      const q = query(collection(db, 'agendamentos'), where('data', '==', data), where('sala', '==', sala));
-      const querySnapshot = await getDocs(q);
+      let { data: agendamentos, error } = await supabase
+        .from('agendamentos')
+        .select('*')
+        .eq('data', data)
+        .eq('sala', sala);
+
+      if (error) {
+        console.error('Erro ao verificar conflito:', error);
+        return true; // Se ocorrer um erro, assumimos que há conflito para prevenir duplicação
+      }
 
       // Converter horários para minutos desde meia-noite
       const inicioNovo = converterParaMinutos(horaInicio);
       const fimNovo = converterParaMinutos(horaFim);
 
       let conflito = false;
-      querySnapshot.forEach((doc) => {
-        const agendamento = doc.data();
+      agendamentos.forEach((agendamento) => {
+        // Se for edição, ignorar o próprio agendamento
+        if (agendamentoId && agendamento.id === agendamentoId) {
+          return;
+        }
+
         const inicioExistente = converterParaMinutos(agendamento.horaInicio);
         const fimExistente = converterParaMinutos(agendamento.horaFim);
 
@@ -259,12 +267,6 @@
       });
 
       return conflito;
-    }
-
-    // Função auxiliar para converter horário para minutos desde meia-noite
-    function converterParaMinutos(hora) {
-      const [h, m] = hora.split(':');
-      return parseInt(h) * 60 + parseInt(m);
     }
 
     document.getElementById('agendamentoForm').addEventListener('submit', async function (event) {
@@ -314,12 +316,27 @@
 
       try {
         if (agendamentoId) {
-          await updateDoc(doc(db, "agendamentos", agendamentoId), agendamento);
+          let { data: updatedData, error } = await supabase
+            .from('agendamentos')
+            .update(agendamento)
+            .eq('id', agendamentoId);
+
+          if (error) {
+            throw error;
+          }
+
           alert('Agendamento atualizado com sucesso!');
           document.getElementById(`agendamento-${agendamentoId}`).remove(); 
           agendamentoId = null;
         } else {
-          await addDoc(collection(db, 'agendamentos'), agendamento);
+          let { data: insertedData, error } = await supabase
+            .from('agendamentos')
+            .insert([agendamento]);
+
+          if (error) {
+            throw error;
+          }
+
           alert('Agendamento realizado com sucesso!');
         }
         document.getElementById('agendamentoForm').reset();
@@ -333,13 +350,14 @@
 
     async function carregarAgendamentos() {
       agendamentosLista.innerHTML = ''; 
-      const querySnapshot = await getDocs(collection(db, 'agendamentos'));
-      const agendamentos = [];
+      let { data: agendamentos, error } = await supabase
+        .from('agendamentos')
+        .select('*');
 
-      querySnapshot.forEach((doc) => {
-        const agendamento = doc.data();
-        agendamentos.push({ id: doc.id, ...agendamento });
-      });
+      if (error) {
+        console.error('Erro ao carregar agendamentos:', error);
+        return;
+      }
 
       // Ordena os agendamentos por data e hora de início
       agendamentos.sort((a, b) => {
@@ -348,8 +366,8 @@
         return dateA - dateB;
       });
 
-      agendamentos.forEach(({ id, ...agendamento }) => {
-        adicionarVisualizacao(id, agendamento);
+      agendamentos.forEach((agendamento) => {
+        adicionarVisualizacao(agendamento.id, agendamento);
       });
     }
 
@@ -391,34 +409,49 @@
     }
 
     window.editarAgendamento = async function(id) {
-      const docRef = doc(db, "agendamentos", id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const agendamento = docSnap.data();
-        document.getElementById('finalidade').value = agendamento.finalidade;
-        document.getElementById('solicitante').value = agendamento.solicitante || '';
-        document.getElementById('nomeSolicitante').value = agendamento.nomeSolicitante || '';
-        document.getElementById('nomeAluno').value = agendamento.nomeAluno || '';
-        document.getElementById('temaTcc').value = agendamento.temaTcc || '';
-        document.getElementById('bancaTcc').value = agendamento.bancaTcc || '';
-        document.getElementById('orientadorTcc').value = agendamento.orientadorTcc || '';
-        document.getElementById('motivoManutencao').value = agendamento.motivoManutencao || '';
-        document.getElementById('sala').value = agendamento.sala;
-        document.getElementById('data').value = agendamento.data;
-        document.getElementById('horaInicio').value = agendamento.horaInicio;
-        document.getElementById('horaFim').value = agendamento.horaFim;
-        agendamentoId = id;
+      let { data: agendamento, error } = await supabase
+        .from('agendamentos')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-        // Mostrar campos específicos baseados na finalidade
-        document.getElementById('finalidade').dispatchEvent(new Event('change'));
+      if (error) {
+        console.error('Erro ao carregar agendamento:', error);
+        return;
       }
+
+      document.getElementById('finalidade').value = agendamento.finalidade;
+      document.getElementById('solicitante').value = agendamento.solicitante || '';
+      document.getElementById('nomeSolicitante').value = agendamento.nomeSolicitante || '';
+      document.getElementById('nomeAluno').value = agendamento.nomeAluno || '';
+      document.getElementById('temaTcc').value = agendamento.temaTcc || '';
+      document.getElementById('bancaTcc').value = agendamento.bancaTcc || '';
+      document.getElementById('orientadorTcc').value = agendamento.orientadorTcc || '';
+      document.getElementById('motivoManutencao').value = agendamento.motivoManutencao || '';
+      document.getElementById('sala').value = agendamento.sala;
+      document.getElementById('data').value = agendamento.data;
+      document.getElementById('horaInicio').value = agendamento.horaInicio;
+      document.getElementById('horaFim').value = agendamento.horaFim;
+      agendamentoId = id;
+
+      // Mostrar campos específicos baseados na finalidade
+      document.getElementById('finalidade').dispatchEvent(new Event('change'));
     };
 
     window.excluirAgendamento = async function(id) {
       if (confirm('Tem certeza que deseja excluir este agendamento?')) {
-        await deleteDoc(doc(db, "agendamentos", id));
-        document.getElementById(`agendamento-${id}`).remove();
-        alert('Agendamento excluído com sucesso!');
+        let { error } = await supabase
+          .from('agendamentos')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Erro ao excluir agendamento:', error);
+          alert('Erro ao excluir o agendamento, tente novamente.');
+        } else {
+          document.getElementById(`agendamento-${id}`).remove();
+          alert('Agendamento excluído com sucesso!');
+        }
       }
     };
 
