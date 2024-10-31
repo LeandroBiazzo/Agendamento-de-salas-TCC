@@ -156,12 +156,11 @@
     </div>
   </div>
 
-  <!-- Inclua a biblioteca do Supabase via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     const supabaseUrl = 'https://yunubfhwztkzdklluurv.supabase.co';
-    const supabaseKey = 'SUA_CHAVE_ANONIMA_DO_SUPABASE'; // Substitua pela sua chave anônima
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bnViZmh3enRremRrbGx1dXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI0ODA3NDIsImV4cCI6MjAxODA1Njc0Mn0.fA0qg4y4aU2F-lfQWBPzD9WDQMGuQmYQE42ZXsqX-sQ';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     const agendamentosLista = document.getElementById('agendamentosLista');
@@ -182,7 +181,7 @@
     // Preenche a lista de orientadores no campo ORIENTADOR
     function preencherOrientadores() {
       const orientadorSelect = document.getElementById('orientadorTcc');
-      orientadorSelect.innerHTML = '<option value="">SELECIONE O ORIENTADOR</option>'; // Limpa e adiciona o placeholder
+      orientadorSelect.innerHTML = '<option value="">SELECIONE O ORIENTADOR</option>';
       orientadores.forEach(orientador => {
         const option = document.createElement('option');
         option.value = orientador;
@@ -202,12 +201,11 @@
     // Exibe campos específicos com base na finalidade selecionada
     document.getElementById('finalidade').addEventListener('change', function () {
       const finalidade = this.value;
-      ocultarTodosCampos(); // Oculta todos os campos antes de exibir o correto
+      ocultarTodosCampos();
 
-      // Mostrar campos com base na finalidade
       if (finalidade === 'TCC') {
         document.getElementById('tccFields').classList.remove('hidden');
-        preencherOrientadores(); // Preenche os orientadores quando "TCC" for selecionado
+        preencherOrientadores();
       } else if (finalidade === 'MANUTENÇÃO') {
         document.getElementById('manutencaoFields').classList.remove('hidden');
         document.getElementById('solicitanteFields').classList.remove('hidden');
@@ -222,7 +220,7 @@
     function validarData(data) {
       const dataSelecionada = new Date(data);
       const dataAtual = new Date();
-      dataAtual.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas as datas
+      dataAtual.setHours(0, 0, 0, 0);
       return dataSelecionada >= dataAtual;
     }
 
@@ -242,16 +240,14 @@
 
       if (error) {
         console.error('Erro ao verificar conflito:', error);
-        return true; // Se ocorrer um erro, assumimos que há conflito para prevenir duplicação
+        return true;
       }
 
-      // Converter horários para minutos desde meia-noite
       const inicioNovo = converterParaMinutos(horaInicio);
       const fimNovo = converterParaMinutos(horaFim);
 
       let conflito = false;
       agendamentos.forEach((agendamento) => {
-        // Se for edição, ignorar o próprio agendamento
         if (agendamentoId && agendamento.id === agendamentoId) {
           return;
         }
@@ -259,7 +255,6 @@
         const inicioExistente = converterParaMinutos(agendamento.horaInicio);
         const fimExistente = converterParaMinutos(agendamento.horaFim);
 
-        // Verifica se há sobreposição de horários
         if ((inicioNovo >= inicioExistente && inicioNovo < fimExistente) ||
             (fimNovo > inicioExistente && fimNovo <= fimExistente) ||
             (inicioNovo <= inicioExistente && fimNovo >= fimExistente)) {
@@ -278,13 +273,11 @@
       const horaFim = document.getElementById('horaFim').value;
       const sala = document.getElementById('sala').value;
 
-      // Validação para não permitir datas passadas
       if (!validarData(data)) {
         alert('Você não pode agendar uma data passada. Escolha a data de hoje ou uma data futura.');
         return;
       }
 
-      // Verificar conflito de sala no mesmo horário
       const conflito = await verificarConflito(sala, data, horaInicio, horaFim);
       if (conflito) {
         alert('Já existe um agendamento para esta sala que conflita com o horário escolhido. Escolha outro horário ou sala.');
@@ -327,7 +320,7 @@
           }
 
           alert('Agendamento atualizado com sucesso!');
-          document.getElementById(`agendamento-${agendamentoId}`).remove(); 
+          document.getElementById(`agendamento-${agendamentoId}`).remove();
           agendamentoId = null;
         } else {
           let { data: insertedData, error } = await supabase
@@ -341,7 +334,7 @@
           alert('Agendamento realizado com sucesso!');
         }
         document.getElementById('agendamentoForm').reset();
-        carregarAgendamentos(); 
+        carregarAgendamentos();
 
       } catch (error) {
         console.error('Erro ao salvar o agendamento:', error);
@@ -350,7 +343,7 @@
     });
 
     async function carregarAgendamentos() {
-      agendamentosLista.innerHTML = ''; 
+      agendamentosLista.innerHTML = '';
       let { data: agendamentos, error } = await supabase
         .from('agendamentos')
         .select('*');
@@ -360,7 +353,6 @@
         return;
       }
 
-      // Ordena os agendamentos por data e hora de início
       agendamentos.sort((a, b) => {
         const dateA = new Date(`${a.data}T${a.horaInicio}`);
         const dateB = new Date(`${b.data}T${b.horaInicio}`);
@@ -377,7 +369,6 @@
       novoAgendamento.classList.add('agendamento-visualizacao');
       novoAgendamento.id = `agendamento-${id}`;
 
-      // Formatar a data no formato dd/mm/aa
       const [ano, mes, dia] = agendamento.data.split('-');
       const dataFormatada = `${dia}/${mes}/${ano.slice(-2)}`;
 
@@ -435,7 +426,6 @@
       document.getElementById('horaFim').value = agendamento.horaFim;
       agendamentoId = id;
 
-      // Mostrar campos específicos baseados na finalidade
       document.getElementById('finalidade').dispatchEvent(new Event('change'));
     };
 
